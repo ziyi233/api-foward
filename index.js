@@ -340,15 +340,6 @@ app.get('/', (req, res) => {
       <div style="text-align: center;">
         <p>随机doro：</p>
         <img src="/doro" alt="随机doro" style="max-width: 200px; max-height: 200px; object-fit: contain;">
-      </div>
-      <div style="text-align: center;">
-        <p>AI绘图(Flux):</p>
-        <img src="/ai-flux?tags=beautiful%2clandscape%2cmountains" alt="AI绘图2D" style="max-width: 200px; max-height: 200px; object-fit: contain;">
-      </div>
-      <div style="text-align: center;">
-        <p>AI绘图(Turbo):</p>
-        <img src="/ai-turbo?tags=beautiful%2clandscape%2cmountains" alt="AI绘图3D" style="max-width: 200px; max-height: 200px; object-fit: contain;">
-      </div>
       <div style="text-align: center;">
         <p>二次元：</p>
         <img src="/anime1" alt="随机二次元" style="max-width: 200px; max-height: 200px; object-fit: contain;">
