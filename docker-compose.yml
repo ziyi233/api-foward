@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  api-forwarder:
+    build: .
+    container_name: api-forwarder
+    ports:
+      - "6667:6667"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=6667
+    volumes:
+      - ./logs:/app/logs
