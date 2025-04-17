@@ -11,6 +11,9 @@ app.use(cors());
 // Middleware to parse JSON bodies
 app.use(express.json());
 
+// 基础配置
+const BASE_TAG = 'masterpiece%20best%20quality%20high%20detailed';
+
 // Main route for forwarding API requests
 app.get('/forward', async (req, res) => {
   try {
@@ -95,7 +98,7 @@ app.get('/forward', async (req, res) => {
   }
 });
 
-// Example route specifically for the random sticker API
+// doro随机贴纸API
 app.get('/doro', async (req, res) => {
   try {
     const response = await axios.get('https://www.doro.asia/api/random-sticker');
@@ -127,20 +130,230 @@ app.get('/doro', async (req, res) => {
   }
 });
 
+// AI绘图 - Flux模型 (2D)
+app.get('/flux', async (req, res) => {
+  try {
+    const tags = req.query.tags || '';
+    
+    if (!tags) {
+      return res.status(400).json({ error: '缺少tags参数，请使用?tags=你的标签' });
+    }
+    
+    // 构建提示词 URL - Flux模型 (2D)
+    const promptUrl = `https://image.pollinations.ai/prompt/${tags}%2c${BASE_TAG}?&model=flux&nologo=true`;
+    
+    // 重定向到生成的图片
+    return res.redirect(promptUrl);
+  } catch (error) {
+    console.error('Error generating AI image with Flux:', error.message);
+    return res.status(500).json({ 
+      error: 'Failed to generate AI image with Flux', 
+      message: error.message 
+    });
+  }
+});
+
+// AI绘图 - Turbo模型 (3D)
+app.get('/turbo', async (req, res) => {
+  try {
+    const tags = req.query.tags || '';
+    
+    if (!tags) {
+      return res.status(400).json({ error: '缺少tags参数，请使用?tags=你的标签' });
+    }
+    
+    // 构建提示词 URL - Turbo模型 (3D)
+    const promptUrl = `https://image.pollinations.ai/prompt/${tags}%2c${BASE_TAG}?&model=turbo&nologo=true`;
+    
+    // 重定向到生成的图片
+    return res.redirect(promptUrl);
+  } catch (error) {
+    console.error('Error generating AI image with Turbo:', error.message);
+    return res.status(500).json({ 
+      error: 'Failed to generate AI image with Turbo', 
+      message: error.message 
+    });
+  }
+});
+
+// 兼容旧的AI绘图API端点
+app.get('/draw', async (req, res) => {
+  try {
+    const tags = req.query.tags || '';
+    const model = req.query.model && ['turbo', 'flux'].includes(req.query.model) ? req.query.model : 'flux';
+    
+    if (!tags) {
+      return res.status(400).json({ error: '缺少tags参数，请使用?tags=你的标签' });
+    }
+    
+    // 根据模型重定向到相应端点
+    if (model === 'turbo') {
+      return res.redirect(`/turbo?tags=${tags}`);
+    } else {
+      return res.redirect(`/flux?tags=${tags}`);
+    }
+  } catch (error) {
+    console.error('Error with AI image redirect:', error.message);
+    return res.status(500).json({ 
+      error: 'Failed with AI image redirect', 
+      message: error.message 
+    });
+  }
+});
+
+// 随机二次元图片1
+app.get('/anime1', async (req, res) => {
+  try {
+    return res.redirect('http://moe.jitsu.top/api/?sort=setu');
+  } catch (error) {
+    console.error('Error getting anime image:', error.message);
+    return res.status(500).json({ error: 'Failed to get anime image' });
+  }
+});
+
+// 随机二次元图片2
+app.get('/anime2', async (req, res) => {
+  try {
+    return res.redirect('https://www.loliapi.com/bg');
+  } catch (error) {
+    console.error('Error getting anime image:', error.message);
+    return res.status(500).json({ error: 'Failed to get anime image' });
+  }
+});
+
+// 蓝档案图片
+app.get('/ba', async (req, res) => {
+  try {
+    return res.redirect('https://pic.696898.xyz/pic?type=ba');
+  } catch (error) {
+    console.error('Error getting Blue Archive image:', error.message);
+    return res.status(500).json({ error: 'Failed to get Blue Archive image' });
+  }
+});
+
+// 指定二次元图片
+app.get('/anime-tag', async (req, res) => {
+  try {
+    const validKeywords = ['azurlane', 'genshinimpact', 'arknights', 'honkai', 'fate', 'frontline', 'princess', 'idolmaster', 'hololive', 'touhou'];
+    const keyword = req.query.keyword || '';
+    const size = req.query.size && ['original', 'regular', 'small'].includes(req.query.size) ? req.query.size : 'regular';
+    const r18 = req.query.r18 === '1' ? '1' : '0';
+    
+    if (!keyword || !validKeywords.includes(keyword)) {
+      return res.status(400).json({ 
+        error: '无效的关键词', 
+        validKeywords: validKeywords 
+      });
+    }
+    
+    const url = `http://image.anosu.top/pixiv/direct?r18=${r18}&size=${size}&keyword=${keyword}`;
+    return res.redirect(url);
+  } catch (error) {
+    console.error('Error getting anime image with tag:', error.message);
+    return res.status(500).json({ error: 'Failed to get anime image with tag' });
+  }
+});
+
+// 白丝图片
+app.get('/baisi', async (req, res) => {
+  try {
+    return res.redirect('http://v2.api-m.com/api/baisi?return=302');
+  } catch (error) {
+    console.error('Error getting baisi image:', error.message);
+    return res.status(500).json({ error: 'Failed to get baisi image' });
+  }
+});
+
+// 黑丝图片
+app.get('/heisi', async (req, res) => {
+  try {
+    return res.redirect('http://v2.api-m.com/api/heisi?return=302');
+  } catch (error) {
+    console.error('Error getting heisi image:', error.message);
+    return res.status(500).json({ error: 'Failed to get heisi image' });
+  }
+});
+
+// 柴郎表情包
+app.get('/maomao', async (req, res) => {
+  try {
+    return res.redirect('https://uapis.cn/api/imgapi/bq/maomao.php');
+  } catch (error) {
+    console.error('Error getting maomao emoji:', error.message);
+    return res.status(500).json({ error: 'Failed to get maomao emoji' });
+  }
+});
+
+// 奶龙表情包
+app.get('/nailong', async (req, res) => {
+  try {
+    return res.redirect('https://oiapi.net/API/FunBoxEmoji/?0=nailong');
+  } catch (error) {
+    console.error('Error getting nailong emoji:', error.message);
+    return res.status(500).json({ error: 'Failed to get nailong emoji' });
+  }
+});
+
 // Home route with instructions
 app.get('/', (req, res) => {
   res.send(`
     <h1>API转发服务</h1>
     <p>使用这个服务来转发API请求并通过重定向直接展示图片。</p>
-    <h2>使用方法：</h2>
+    
+    <h2>通用转发：</h2>
     <ul>
       <li><code>/forward?url=https://api-endpoint.com</code> - 转发任意API请求并重定向到图片URL</li>
       <li><code>/forward?url=https://api-endpoint.com&field=image</code> - 指定自定义字段名，当API返回的图片URL不在'url'字段时使用</li>
-      <li><code>/doro</code> - 重定向到doro.asia的随机贴纸</li>
     </ul>
+    
+    <h2>AI绘图：</h2>
+    <ul>
+      <li><code>/flux?tags=beautiful%2clandscape</code> - 使用Flux模型生成图片（2D风格）</li>
+      <li><code>/turbo?tags=beautiful%2clandscape</code> - 使用Turbo模型生成图片（3D风格）</li>
+      <li><code>/draw?tags=beautiful%2clandscape&model=turbo</code> - 兼容旧端点，会重定向到相应模型</li>
+    </ul>
+    
+    <h2>二次元图片：</h2>
+    <ul>
+      <li><code>/anime1</code> - 随机二次元图片1</li>
+      <li><code>/anime2</code> - 随机二次元图片2</li>
+      <li><code>/ba</code> - 蓝档案图片</li>
+      <li><code>/anime-tag?keyword=genshinimpact</code> - 指定关键词的二次元图片</li>
+      <li><code>/anime-tag?keyword=azurlane&size=original&r18=0</code> - 可选参数：size（original/regular/small），r18（0/1）</li>
+    </ul>
+    
+    <h2>三次元图片：</h2>
+    <ul>
+      <li><code>/baisi</code> - 白丝图片</li>
+      <li><code>/heisi</code> - 黑丝图片</li>
+    </ul>
+    
+    <h2>表情包：</h2>
+    <ul>
+      <li><code>/doro</code> - doro.asia的随机贴纸</li>
+      <li><code>/maomao</code> - 柴郎表情包</li>
+      <li><code>/nailong</code> - 奶龙表情包</li>
+    </ul>
+    
     <h2>示例：</h2>
-    <p>立即尝试： <a href="/doro" target="_blank">获取随机doro</a></p>
-    <p>或在img标签中使用： <img src="/doro" alt="随机贴纸" style="max-width: 300px;"></p>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+      <div style="text-align: center;">
+        <p>随机doro：</p>
+        <img src="/doro" alt="随机doro" style="max-width: 200px; max-height: 200px; object-fit: contain;">
+      </div>
+      <div style="text-align: center;">
+        <p>AI绘图(Flux):</p>
+        <img src="/ai-flux?tags=beautiful%2clandscape%2cmountains" alt="AI绘图2D" style="max-width: 200px; max-height: 200px; object-fit: contain;">
+      </div>
+      <div style="text-align: center;">
+        <p>AI绘图(Turbo):</p>
+        <img src="/ai-turbo?tags=beautiful%2clandscape%2cmountains" alt="AI绘图3D" style="max-width: 200px; max-height: 200px; object-fit: contain;">
+      </div>
+      <div style="text-align: center;">
+        <p>二次元：</p>
+        <img src="/anime1" alt="随机二次元" style="max-width: 200px; max-height: 200px; object-fit: contain;">
+      </div>
+    </div>
   `);
 });
 
