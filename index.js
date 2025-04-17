@@ -135,10 +135,11 @@ app.get('/', (req, res) => {
     <h2>使用方法：</h2>
     <ul>
       <li><code>/forward?url=https://api-endpoint.com</code> - 转发任意API请求并重定向到图片URL</li>
+      <li><code>/forward?url=https://api-endpoint.com&field=image</code> - 指定自定义字段名，当API返回的图片URL不在'url'字段时使用</li>
       <li><code>/doro</code> - 重定向到doro.asia的随机贴纸</li>
     </ul>
     <h2>示例：</h2>
-    <p>立即尝试： <a href="/doro" target="_blank">获取随机贴纸</a></p>
+    <p>立即尝试： <a href="/doro" target="_blank">获取随机doro</a></p>
     <p>或在img标签中使用： <img src="/doro" alt="随机贴纸" style="max-width: 300px;"></p>
   `);
 });
