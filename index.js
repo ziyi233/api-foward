@@ -96,7 +96,7 @@ app.get('/forward', async (req, res) => {
 });
 
 // Example route specifically for the random sticker API
-app.get('/random-sticker', async (req, res) => {
+app.get('/doro', async (req, res) => {
   try {
     const response = await axios.get('https://www.doro.asia/api/random-sticker');
     
@@ -119,9 +119,9 @@ app.get('/random-sticker', async (req, res) => {
     // Return an error message
     return res.status(404).send('Could not find image URL in the response');
   } catch (error) {
-    console.error('Error getting random sticker:', error.message);
+    console.error('Error getting doro:', error.message);
     return res.status(500).json({ 
-      error: 'Failed to get random sticker', 
+      error: 'Failed to get doro', 
       message: error.message 
     });
   }
@@ -135,11 +135,11 @@ app.get('/', (req, res) => {
     <h2>使用方法：</h2>
     <ul>
       <li><code>/forward?url=https://api-endpoint.com</code> - 转发任意API请求并重定向到图片URL</li>
-      <li><code>/random-sticker</code> - 重定向到doro.asia的随机贴纸</li>
+      <li><code>/doro</code> - 重定向到doro.asia的随机贴纸</li>
     </ul>
     <h2>示例：</h2>
-    <p>立即尝试： <a href="/random-sticker" target="_blank">获取随机贴纸</a></p>
-    <p>或在img标签中使用： <img src="/random-sticker" alt="随机贴纸" style="max-width: 300px;"></p>
+    <p>立即尝试： <a href="/doro" target="_blank">获取随机贴纸</a></p>
+    <p>或在img标签中使用： <img src="/doro" alt="随机贴纸" style="max-width: 300px;"></p>
   `);
 });
 
