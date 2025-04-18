@@ -1,11 +1,12 @@
 {
   "apiUrls": {
     "forward": {
+      "group": "通用转发",
       "description": "通用转发代理 (特殊路由)",
       "method": "proxy",
       "queryParams": [
         { "name": "url", "required": true, "description": "要转发的目标 API URL" },
-        { "name": "field", "required": false, "defaultValue": "url", "description": "包含图片 URL 的 JSON 字段名 (支持点表示法，例如 data.imageUrl)" }
+        { "name": "field", "required": false, "defaultValue": "url", "description": "包含图片 URL 的 JSON 字段名 (支持点表示法)" }
       ],
       "urlConstruction": "special_forward",
       "proxySettings": {
@@ -14,6 +15,7 @@
       }
     },
     "doro": {
+      "group": "表情包",
       "description": "doro.asia 的随机贴纸",
       "url": "https://www.doro.asia/api/random-sticker",
       "method": "proxy",
@@ -24,6 +26,7 @@
       }
     },
     "flux": {
+      "group": "AI绘图",
       "description": "AI 绘图 - Flux 模型 (2D)",
       "url": "https://image.pollinations.ai/prompt/",
       "method": "redirect",
@@ -34,6 +37,7 @@
       "modelName": "flux"
     },
     "turbo": {
+      "group": "AI绘图",
       "description": "AI 绘图 - Turbo 模型 (3D)",
       "url": "https://image.pollinations.ai/prompt/",
       "method": "redirect",
@@ -44,6 +48,7 @@
       "modelName": "turbo"
     },
      "draw": {
+      "group": "AI绘图",
       "description": "AI 绘图 - 兼容旧端点",
       "method": "redirect",
       "queryParams": [
@@ -53,24 +58,28 @@
       "urlConstruction": "special_draw_redirect"
     },
     "anime1": {
+      "group": "二次元图片",
       "description": "随机二次元图片 1",
       "url": "http://moe.jitsu.top/api/?sort=setu",
       "method": "redirect",
       "queryParams": []
     },
     "anime2": {
+      "group": "二次元图片",
       "description": "随机二次元图片 2",
       "url": "https://www.loliapi.com/bg",
       "method": "redirect",
       "queryParams": []
     },
     "ba": {
+      "group": "二次元图片",
       "description": "蓝档案图片",
       "url": "https://pic.696898.xyz/pic?type=ba",
       "method": "redirect",
       "queryParams": []
     },
     "anime-tag": {
+      "group": "二次元图片",
       "description": "指定关键词的二次元图片",
       "url": "http://image.anosu.top/pixiv/direct",
       "method": "redirect",
@@ -81,24 +90,28 @@
       ]
     },
     "baisi": {
+      "group": "三次元图片",
       "description": "白丝图片",
       "url": "http://v2.api-m.com/api/baisi?return=302",
       "method": "redirect",
       "queryParams": []
     },
     "heisi": {
+      "group": "三次元图片",
       "description": "黑丝图片",
       "url": "http://v2.api-m.com/api/heisi?return=302",
       "method": "redirect",
       "queryParams": []
     },
     "maomao": {
+      "group": "表情包",
       "description": "柴郎表情包",
       "url": "https://uapis.cn/api/imgapi/bq/maomao.php",
       "method": "redirect",
       "queryParams": []
     },
     "nailong": {
+      "group": "表情包",
       "description": "奶龙表情包",
       "url": "https://oiapi.net/API/FunBoxEmoji/?0=nailong",
       "method": "redirect",

@@ -8,8 +8,16 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "index.js"
+      "src": "^/admin\\.html$",  
+      "dest": "/admin.html" 
+    },
+    {
+      "src": "^/config\\.json$", 
+      "dest": "/config.json" 
+    },
+    {
+      "src": "/(.*)",           
+      "dest": "index.js"       
     }
   ]
 }

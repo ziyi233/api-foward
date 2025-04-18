@@ -272,10 +272,29 @@ app.get('/:apiKey', async (req, res, next) => {
 // Needs to be registered *before* the wildcard route or be handled differently
 app.get('/', (req, res) => {
     console.log("[Router] Handling request for /");
-    // Generate API list using Bootstrap table structure
-    let apiTableHtml = `
+    // Group endpoints by group name
+    const groupedApis = {};
+    for (const key in currentConfig.apiUrls) {
+        const entry = currentConfig.apiUrls[key];
+        const group = entry.group || '未分组';
+        if (!groupedApis[group]) {
+            groupedApis[group] = [];
+        }
+        groupedApis[group].push({ key, ...entry });
+    }
+
+    // Sort groups
+    const sortedGroups = Object.keys(groupedApis).sort((a, b) => {
+        const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '未分组': 99};
+        return (order[a] || 99) - (order[b] || 99);
+    });
+
+    let groupedApiHtml = '';
+    sortedGroups.forEach(groupName => {
+        groupedApiHtml += `<h3 class="mt-4">${groupName}</h3>`;
+        let apiTableHtml = `
         <div class="table-responsive">
-        <table class="table table-striped table-hover table-bordered">
+        <table class="table table-striped table-hover table-bordered table-sm">
             <thead>
                 <tr>
                     <th scope="col" class="text-nowrap">端点路径</th>
@@ -286,12 +305,13 @@ app.get('/', (req, res) => {
             </thead>
             <tbody>`;
 
-    const sortedApiKeys = Object.keys(currentConfig.apiUrls || {}).sort(); // Sort keys for consistent order
+        // Sort endpoints within the group
+        groupedApis[groupName].sort((a, b) => a.key.localeCompare(b.key));
 
-    for (const key of sortedApiKeys) { // Iterate over sorted keys
-        const entry = currentConfig.apiUrls[key];
-        let paramsDesc = '';
-        if (entry.queryParams && entry.queryParams.length > 0) {
+        groupedApis[groupName].forEach(entry => {
+            const key = entry.key; // Get the key
+            let paramsDesc = '';
+            if (entry.queryParams && entry.queryParams.length > 0) {
             paramsDesc = entry.queryParams.map(p => {
                  let desc = `<code class="text-nowrap">${p.name}</code>`;
                  if(p.required) desc += '<span class="text-danger fw-bold" title="必需参数">*</span>';
@@ -310,12 +330,17 @@ app.get('/', (req, res) => {
                     <td class="text-nowrap">${entry.method === 'proxy' ? '<span class="badge bg-primary">服务器代理</span>' : '<span class="badge bg-secondary">浏览器重定向</span>'}</td>
                     <td>${paramsDesc}</td>
                 </tr>`;
-    }
-    apiTableHtml += `
+        }); // End loop for endpoints within group
+
+        apiTableHtml += `
             </tbody>
         </table>
-        </div>
-        <p class="text-muted"><small><span class="text-danger fw-bold">*</span> 表示必需参数</small></p>`;
+        </div>`;
+        groupedApiHtml += apiTableHtml; // Add table for the group
+    }); // End loop for groups
+
+    groupedApiHtml += `<p class="text-muted mt-2"><small><span class="text-danger fw-bold">*</span> 表示必需参数</small></p>`;
+
 
     // Construct the full HTML page with Bootstrap 5
     res.send(`
@@ -351,7 +376,7 @@ app.get('/', (req, res) => {
             <div class="card mb-4">
                 <div class="card-header"><h2 class="h5 mb-0">可用 API 端点</h2></div>
                 <div class="card-body">
-                    ${apiTableHtml}
+                    ${groupedApiHtml} 
                 </div>
             </div>
 

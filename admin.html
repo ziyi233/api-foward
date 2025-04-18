@@ -6,7 +6,7 @@
     <title>API 转发配置管理 (Bootstrap)</title>
     <!-- 新 Bootstrap5 核心 CSS 文件 -->
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
-    <!-- Optional: Bootstrap Icons CDN (Keeping original for now, replace if needed) -->
+    <!-- Optional: Bootstrap Icons CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         body { background-color: #f8f9fa; padding-top: 1.5rem; padding-bottom: 3rem; }
@@ -24,6 +24,7 @@
         #message { margin-top: 1.5rem; }
         .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
         .add-endpoint-button { margin-bottom: 1.5rem; }
+        .group-title { margin-top: 2rem; margin-bottom: 1rem; font-size: 1.5rem; color: #6c757d; border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem; }
     </style>
 </head>
 <body>
@@ -67,17 +68,10 @@
         <div id="message" class="alert mt-4" role="alert" style="display: none;"></div>
     </main>
 
-    <!-- Popper.js -->
+    <!-- Bootstrap 5 JS Bundle CDN -->
     <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/popper.js/2.11.2/umd/popper.min.js"></script>
-    <!-- Bootstrap 5 JS -->
     <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/js/bootstrap.min.js"></script>
     <script>
-        // Initialize tooltips after DOM is ready and Bootstrap JS is likely loaded
-        document.addEventListener('DOMContentLoaded', () => {
-             // Initial tooltip initialization needs to happen after Bootstrap JS is loaded
-             // We'll call it within loadConfig after rendering as well.
-        });
-
         const form = document.getElementById('config-form');
         const apiConfigsContainer = document.getElementById('api-configs-container');
         const baseTagInput = document.getElementById('baseTag');
@@ -91,7 +85,6 @@
             messageDiv.style.display = 'block';
             messageDiv.setAttribute('role', 'alert');
             messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            // Simplified auto-hide
             setTimeout(() => { 
                  messageDiv.style.display = 'none'; 
             }, 7000);
@@ -102,40 +95,23 @@
         }
         
         function initializeTooltips(container) {
-             // Check if Bootstrap and Tooltip component are loaded
             if (typeof bootstrap === 'undefined' || typeof bootstrap.Tooltip === 'undefined') {
                 console.warn('Bootstrap Tooltip component not ready yet, skipping initialization.');
-                // Optionally retry after a delay, but for now, just skip
-                // setTimeout(() => initializeTooltips(container), 200); 
                 return; 
             }
-            console.log('Initializing tooltips in:', container); // Debug log
             const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
             const newTooltips = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 const existingTooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl); 
-                if (existingTooltip) {
-                    existingTooltip.dispose();
-                }
-                try {
-                     return new bootstrap.Tooltip(tooltipTriggerEl); 
-                } catch (e) {
-                     console.error("Failed to initialize tooltip for element:", tooltipTriggerEl, e);
-                     return null; 
-                }
+                if (existingTooltip) { existingTooltip.dispose(); }
+                try { return new bootstrap.Tooltip(tooltipTriggerEl); } 
+                catch (e) { console.error("Failed to initialize tooltip:", tooltipTriggerEl, e); return null; }
             }).filter(Boolean); 
             bootstrapTooltipList = bootstrapTooltipList.concat(newTooltips); 
         }
         
         function disposeAllTooltips() {
-             // Check if bootstrap is defined before trying to dispose
              if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-                 bootstrapTooltipList.forEach(tooltip => {
-                     try {
-                         tooltip.dispose();
-                     } catch (e) {
-                         console.warn("Error disposing tooltip:", e);
-                     }
-                 });
+                 bootstrapTooltipList.forEach(tooltip => { try { tooltip.dispose(); } catch (e) { console.warn("Error disposing tooltip:", e); } });
              }
              bootstrapTooltipList = [];
         }
@@ -157,8 +133,16 @@
             const cardBody = document.createElement('div');
             cardBody.className = 'card-body';
 
-            // Description, URL, Method... (rest of the innerHTML generation is the same as before)
-             // Description
+            // Group Input
+            cardBody.innerHTML += `
+                <div class="row mb-3 align-items-center">
+                    <label for="${apiKey}-group" class="col-sm-3 col-form-label text-sm-end" title="用于分类显示的组名">分组:</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="${apiKey}-group" name="${apiKey}-group" value="${configEntry.group || ''}" placeholder="例如: AI绘图, 表情包">
+                    </div>
+                </div>`;
+
+            // Description
             cardBody.innerHTML += `
                 <div class="row mb-3 align-items-center">
                     <label for="${apiKey}-description" class="col-sm-3 col-form-label text-sm-end" title="这个 API 端点的用途说明">描述:</label>
@@ -216,7 +200,6 @@
                  if(input) input.value = "(由 'field' 参数决定)";
              }
 
-
             // Fallback Action Dropdown
             proxySettingsDiv.innerHTML += `
                 <div class="row mb-3 align-items-center">
@@ -256,31 +239,60 @@
             cardBody.appendChild(queryParamsDiv);
             card.appendChild(cardBody);
 
-
             // Event listener to toggle proxy settings visibility
             const methodSelect = cardBody.querySelector(`#${apiKey}-method`);
             methodSelect.addEventListener('change', (event) => {
                 proxySettingsDiv.style.display = event.target.value === 'proxy' ? 'block' : 'none';
             });
 
-            apiConfigsContainer.appendChild(card);
-            // Defer tooltip initialization slightly to ensure Bootstrap JS is ready
-            setTimeout(() => initializeTooltips(card), 50); 
+            return card; // Return the created card element
         }
 
         function renderConfig() {
             disposeAllTooltips(); 
             apiConfigsContainer.innerHTML = '';
-            if (Object.keys(currentConfigData.apiUrls || {}).length === 0) {
+            
+            const apiUrls = currentConfigData.apiUrls || {};
+            const groupedEndpoints = {};
+
+            // Group endpoints
+            for (const apiKey in apiUrls) {
+                const entry = apiUrls[apiKey];
+                const group = entry.group || '未分组'; // Default group
+                if (!groupedEndpoints[group]) {
+                    groupedEndpoints[group] = [];
+                }
+                groupedEndpoints[group].push({ key: apiKey, config: entry });
+            }
+
+            // Sort groups (optional: specific order or alphabetical)
+            const sortedGroups = Object.keys(groupedEndpoints).sort((a, b) => {
+                 // Define a custom sort order if needed, e.g., put '通用转发' first
+                 const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '未分组': 99};
+                 return (order[a] || 99) - (order[b] || 99);
+            });
+
+            if (sortedGroups.length === 0) {
                  apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
             } else {
-                const sortedKeys = Object.keys(currentConfigData.apiUrls).sort();
-                sortedKeys.forEach(apiKey => {
-                     renderApiEndpoint(apiKey, currentConfigData.apiUrls[apiKey]);
+                // Render endpoints grouped by category
+                sortedGroups.forEach(groupName => {
+                    const groupTitle = document.createElement('h2');
+                    groupTitle.className = 'group-title';
+                    groupTitle.textContent = groupName;
+                    apiConfigsContainer.appendChild(groupTitle);
+
+                    // Sort endpoints within the group alphabetically by key
+                    groupedEndpoints[groupName].sort((a, b) => a.key.localeCompare(b.key)); 
+
+                    groupedEndpoints[groupName].forEach(item => {
+                        const cardElement = renderApiEndpoint(item.key, item.config);
+                        apiConfigsContainer.appendChild(cardElement);
+                    });
                 });
             }
+            
             baseTagInput.value = currentConfigData.baseTag || '';
-            // Initialize global tooltips after a short delay
             setTimeout(() => initializeTooltips(document.body), 100); 
         }
 
@@ -328,11 +340,9 @@
                 </div>
              `;
              container.appendChild(paramDiv);
-             // Defer tooltip initialization for the new param item
              setTimeout(() => initializeTooltips(paramDiv), 50); 
         }
 
-        // --- addQueryParam, removeQueryParam, addApiEndpoint, removeApiEndpoint functions remain the same ---
         function addQueryParam(container, apiKey) {
             const existingParams = container.querySelectorAll('.param-item');
             const newIndex = existingParams.length;
@@ -342,47 +352,61 @@
 
         function removeQueryParam(button) {
             const paramItem = button.closest('.param-item');
-            if (paramItem) {
-                paramItem.remove();
-            }
+            if (paramItem) { paramItem.remove(); }
         }
 
         function addApiEndpoint() {
              const newApiKey = `new_endpoint_${Date.now()}`;
-             const newConfigEntry = { description: "", url: "", method: "redirect", queryParams: [], proxySettings: {} };
+             const newConfigEntry = { group: "未分组", description: "", url: "", method: "redirect", queryParams: [], proxySettings: {} };
              if (!apiConfigsContainer.querySelector('.card')) {
                  apiConfigsContainer.innerHTML = '';
              }
-             renderApiEndpoint(newApiKey, newConfigEntry);
-             const newCard = apiConfigsContainer.querySelector(`[data-api-key="${newApiKey}"]`);
-             if(newCard) {
-                 newCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                 newCard.querySelector('.api-key-input').focus();
+             // Find or create the '未分组' section
+             let ungroupedContainer = apiConfigsContainer.querySelector('#group-未分组');
+             if (!ungroupedContainer) {
+                 const groupTitle = document.createElement('h2');
+                 groupTitle.className = 'group-title';
+                 groupTitle.textContent = '未分组';
+                 apiConfigsContainer.appendChild(groupTitle);
+                 ungroupedContainer = document.createElement('div');
+                 ungroupedContainer.id = 'group-未分组';
+                 apiConfigsContainer.appendChild(ungroupedContainer);
              }
+             const cardElement = renderApiEndpoint(newApiKey, newConfigEntry);
+             ungroupedContainer.appendChild(cardElement); // Append to the correct group container
+             
+             cardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+             cardElement.querySelector('.api-key-input').focus();
         }
 
         function removeApiEndpoint(card) {
             const apiKeyInput = card.querySelector('.api-key-input');
             const keyToRemove = apiKeyInput ? apiKeyInput.value : '(未知)';
             if (confirm(`确定要删除端点 "${keyToRemove}" 吗？此操作将在保存后生效且无法撤销。`)) {
+                const parentGroupContainer = card.parentElement;
                 card.remove();
                  if (!apiConfigsContainer.querySelector('.card')) {
                      apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
+                 } else if (parentGroupContainer && !parentGroupContainer.querySelector('.card')) {
+                      // If the group becomes empty, remove the group title as well
+                      const groupTitle = parentGroupContainer.previousElementSibling;
+                      if (groupTitle && groupTitle.classList.contains('group-title')) {
+                          groupTitle.remove();
+                      }
+                      parentGroupContainer.remove(); // Remove the empty group container
                  }
                 showMessage(`端点 ${keyToRemove} 已标记为删除。点击“保存所有配置”以确认。`, 'success');
             }
         }
 
-
         async function loadConfig() {
-            // Use Bootstrap spinner for loading indicator
             apiConfigsContainer.innerHTML = `<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">正在加载配置...</span></div><p class="mt-2">正在加载配置...</p></div>`;
             try {
                 const response = await fetch('/config');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 currentConfigData = await response.json();
                 if (!currentConfigData.apiUrls) currentConfigData.apiUrls = {};
-                renderConfig(); // Render the UI
+                renderConfig(); 
             } catch (error) {
                 console.error('Error loading config:', error);
                 apiConfigsContainer.innerHTML = '<div class="alert alert-danger">加载配置失败。</div>';
@@ -390,7 +414,6 @@
             }
         }
 
-        // --- saveConfig function remains the same ---
         async function saveConfig(event) {
             event.preventDefault();
 
@@ -405,18 +428,13 @@
                 const apiKey = sanitizeApiKey(apiKeyInput.value.trim());
                 const originalApiKey = card.getAttribute('data-api-key');
 
-                 if (!apiKey) {
-                     showMessage(`错误：发现一个未命名（为空）的 API 端点！请输入路径名。`, 'error');
-                     apiKeyInput.focus(); hasError = true; return;
-                 }
-                 if (usedApiKeys.has(apiKey)) {
-                      showMessage(`错误：API 端点路径 "/${apiKey}" 重复！请确保每个端点路径唯一。`, 'error');
-                      apiKeyInput.focus(); hasError = true; return;
-                 }
+                 if (!apiKey) { showMessage(`错误：发现一个未命名（为空）的 API 端点！请输入路径名。`, 'error'); apiKeyInput.focus(); hasError = true; return; }
+                 if (usedApiKeys.has(apiKey)) { showMessage(`错误：API 端点路径 "/${apiKey}" 重复！请确保每个端点路径唯一。`, 'error'); apiKeyInput.focus(); hasError = true; return; }
                  usedApiKeys.add(apiKey);
 
                 const urlInput = card.querySelector(`#${originalApiKey}-url`);
                 const configEntry = {
+                    group: card.querySelector(`#${originalApiKey}-group`).value.trim() || '未分组', // Save group
                     description: card.querySelector(`#${originalApiKey}-description`).value.trim(),
                     url: urlInput.value.trim(),
                     method: card.querySelector(`#${originalApiKey}-method`).value,
@@ -424,10 +442,7 @@
                     proxySettings: {}
                 };
 
-                if (!configEntry.url) {
-                     showMessage(`错误：端点 /${apiKey} 的目标 URL 不能为空！`, 'error');
-                     urlInput.focus(); hasError = true; return;
-                }
+                if (!configEntry.url) { showMessage(`错误：端点 /${apiKey} 的目标 URL 不能为空！`, 'error'); urlInput.focus(); hasError = true; return; }
 
                 // Collect Query Params
                 const paramItems = card.querySelectorAll(`#${originalApiKey}-params-list .param-item`);
@@ -437,10 +452,7 @@
                      const nameInput = paramItem.querySelector(`input[id$="-name"]`);
                      const paramName = nameInput.value.trim();
                      if (!paramName) return;
-                     if (paramNames.has(paramName)) {
-                         showMessage(`错误：端点 /${apiKey} 存在重复的查询参数名称 "${paramName}"！`, 'error');
-                         nameInput.focus(); hasError = true; return;
-                     }
+                     if (paramNames.has(paramName)) { showMessage(`错误：端点 /${apiKey} 存在重复的查询参数名称 "${paramName}"！`, 'error'); nameInput.focus(); hasError = true; return; }
                      paramNames.add(paramName);
                      const descInput = paramItem.querySelector(`textarea[id$="-desc"]`);
                      const requiredInput = paramItem.querySelector(`input[id$="-required"]`);
@@ -502,7 +514,6 @@
         }
 
         form.addEventListener('submit', saveConfig);
-        // Use DOMContentLoaded to ensure the initial structure is ready before loading config
         document.addEventListener('DOMContentLoaded', loadConfig);
     </script>
 </body>
