@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 转发配置管理 (Bootstrap)</title>
+    <!-- 新 Bootstrap5 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+    <!-- Optional: Bootstrap Icons CDN (Keeping original for now, replace if needed) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 1.5rem; padding-bottom: 3rem; }
+        .container { max-width: 960px; }
+        .card { margin-bottom: 1.5rem; }
+        .card-header { background-color: rgba(0, 123, 255, 0.05); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .api-key-input { font-weight: bold; border: none; border-bottom: 1px dashed #0d6efd; padding: 2px 5px; background: transparent; color: #0d6efd; margin-left: 0.25rem; width: auto; max-width: 250px; }
+        .api-key-input:focus { outline: none; border-bottom-style: solid; }
+        .config-item { margin-bottom: 1rem; }
+        .config-item label { font-weight: 500; color: #495057; }
+        .proxy-settings, .query-params { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
+        .param-item { border: 1px solid #e9ecef; padding: 1rem; margin-bottom: 1rem; border-radius: 0.375rem; background-color: #fff; position: relative; }
+        .param-item .remove-param-button { position: absolute; top: 0.5rem; right: 0.5rem; }
+        .tooltip-icon { cursor: help; color: #6c757d; margin-left: 0.25rem; }
+        #message { margin-top: 1.5rem; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .add-endpoint-button { margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+             <h1 class="h3">API 转发配置管理</h1>
+             <button type="button" class="btn btn-success add-endpoint-button" onclick="addApiEndpoint()"><i class="bi bi-plus-lg"></i> 添加新 API 端点</button>
+        </div>
+        <p class="text-muted mb-4">在这里修改、添加或删除 API 转发规则。所有更改将**立即生效**。</p>
+
+        <form id="config-form">
+            <div id="api-configs-container">
+                <!-- Initial Loading Indicator -->
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">正在加载配置...</span>
+                    </div>
+                    <p class="mt-2">正在加载配置...</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">全局设置</div>
+                <div class="card-body">
+                     <div class="row mb-3 align-items-center">
+                         <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">全局基础 Tag:</label>
+                         <div class="col-sm-8">
+                             <input type="text" class="form-control" id="baseTag" name="baseTag" placeholder="例如: masterpiece%20best%20quality">
+                         </div>
+                         <div class="col-sm-1">
+                              <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="这个 Tag 会自动附加到 AI 绘图请求的末尾，以提升图像质量。请使用 URL 编码格式。"></i>
+                         </div>
+                     </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 btn-lg save-button">
+                <i class="bi bi-save"></i> 保存所有配置
+            </button>
+        </form>
+        <div id="message" class="alert mt-4" role="alert" style="display: none;"></div>
+    </main>
+
+    <!-- Popper.js -->
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/popper.js/2.11.2/umd/popper.min.js"></script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/js/bootstrap.min.js"></script>
+    <script>
+        // Initialize tooltips after DOM is ready and Bootstrap JS is likely loaded
+        document.addEventListener('DOMContentLoaded', () => {
+             // Initial tooltip initialization needs to happen after Bootstrap JS is loaded
+             // We'll call it within loadConfig after rendering as well.
+        });
+
+        const form = document.getElementById('config-form');
+        const apiConfigsContainer = document.getElementById('api-configs-container');
+        const baseTagInput = document.getElementById('baseTag');
+        const messageDiv = document.getElementById('message');
+        let currentConfigData = { apiUrls: {}, baseTag: "" };
+        let bootstrapTooltipList = []; 
+
+        function showMessage(text, type = 'success') {
+            messageDiv.textContent = text;
+            messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} mt-4`; 
+            messageDiv.style.display = 'block';
+            messageDiv.setAttribute('role', 'alert');
+            messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            // Simplified auto-hide
+            setTimeout(() => { 
+                 messageDiv.style.display = 'none'; 
+            }, 7000);
+        }
+
+        function sanitizeApiKey(key) {
+            return key.replace(/^\//, '').replace(/[^a-zA-Z0-9-_]/g, '_');
+        }
+        
+        function initializeTooltips(container) {
+             // Check if Bootstrap and Tooltip component are loaded
+            if (typeof bootstrap === 'undefined' || typeof bootstrap.Tooltip === 'undefined') {
+                console.warn('Bootstrap Tooltip component not ready yet, skipping initialization.');
+                // Optionally retry after a delay, but for now, just skip
+                // setTimeout(() => initializeTooltips(container), 200); 
+                return; 
+            }
+            console.log('Initializing tooltips in:', container); // Debug log
+            const tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const newTooltips = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                const existingTooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl); 
+                if (existingTooltip) {
+                    existingTooltip.dispose();
+                }
+                try {
+                     return new bootstrap.Tooltip(tooltipTriggerEl); 
+                } catch (e) {
+                     console.error("Failed to initialize tooltip for element:", tooltipTriggerEl, e);
+                     return null; 
+                }
+            }).filter(Boolean); 
+            bootstrapTooltipList = bootstrapTooltipList.concat(newTooltips); 
+        }
+        
+        function disposeAllTooltips() {
+             // Check if bootstrap is defined before trying to dispose
+             if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                 bootstrapTooltipList.forEach(tooltip => {
+                     try {
+                         tooltip.dispose();
+                     } catch (e) {
+                         console.warn("Error disposing tooltip:", e);
+                     }
+                 });
+             }
+             bootstrapTooltipList = [];
+        }
+
+        function renderApiEndpoint(apiKey, configEntry) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.setAttribute('data-api-key', apiKey); 
+
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            cardHeader.innerHTML = `
+                <span>端点: /<input type="text" value="${apiKey}" class="api-key-input" aria-label="API 端点路径" placeholder="路径名" required></span>
+                <button type="button" class="btn btn-danger btn-sm delete-endpoint-button" aria-label="删除此端点" onclick="removeApiEndpoint(this.closest('.card'))">
+                    <i class="bi bi-trash"></i> 删除
+                </button>`;
+            card.appendChild(cardHeader);
+
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+
+            // Description, URL, Method... (rest of the innerHTML generation is the same as before)
+             // Description
+            cardBody.innerHTML += `
+                <div class="row mb-3 align-items-center">
+                    <label for="${apiKey}-description" class="col-sm-3 col-form-label text-sm-end" title="这个 API 端点的用途说明">描述:</label>
+                    <div class="col-sm-9">
+                        <textarea class="form-control" id="${apiKey}-description" name="${apiKey}-description" placeholder="例如：获取随机猫咪图片">${configEntry.description || ''}</textarea>
+                    </div>
+                </div>`;
+
+            // URL
+            cardBody.innerHTML += `
+                <div class="row mb-3 align-items-center">
+                    <label for="${apiKey}-url" class="col-sm-3 col-form-label text-sm-end" title="目标 API 的基础地址">目标 URL:</label>
+                    <div class="col-sm-8">
+                        <input type="url" class="form-control" id="${apiKey}-url" name="${apiKey}-url" value="${configEntry.url || ''}" placeholder="https://api.example.com/data" required>
+                    </div>
+                     <div class="col-sm-1">
+                         ${configEntry.urlConstruction && configEntry.urlConstruction.startsWith('special_') ? '<i class="bi bi-exclamation-triangle-fill text-warning tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="注意: 此端点原配置包含特殊 URL 构建逻辑 ('+configEntry.urlConstruction+'), 修改基础 URL 可能影响其功能。"></i>' : ''}
+                     </div>
+                </div>`;
+
+            // Method Dropdown
+            cardBody.innerHTML += `
+                <div class="row mb-3 align-items-center">
+                    <label for="${apiKey}-method" class="col-sm-3 col-form-label text-sm-end" title="服务器处理此请求的方式">处理方式:</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="${apiKey}-method" name="${apiKey}-method">
+                            <option value="redirect" ${configEntry.method === 'redirect' ? 'selected' : ''}>浏览器重定向 (302)</option>
+                            <option value="proxy" ${configEntry.method === 'proxy' ? 'selected' : ''}>服务器代理请求</option>
+                        </select>
+                    </div>
+                     <div class="col-sm-1">
+                         <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title='"重定向": 服务器告诉浏览器去访问目标 URL。"代理": 服务器代替浏览器去访问目标 URL，然后将结果返回给浏览器。'></i>
+                     </div>
+                </div>`;
+
+            // Proxy Settings Container
+            const proxySettingsDiv = document.createElement('div');
+            proxySettingsDiv.className = 'proxy-settings mt-3 pt-3 border-top';
+            proxySettingsDiv.style.display = configEntry.method === 'proxy' ? 'block' : 'none';
+            proxySettingsDiv.innerHTML = '<h5>代理设置</h5>';
+
+            // Image URL Field
+            proxySettingsDiv.innerHTML += `
+                <div class="row mb-3 align-items-center">
+                    <label for="${apiKey}-imageUrlField" class="col-sm-3 col-form-label text-sm-end" title="如果目标 API 返回 JSON，指定包含图片链接的字段路径">图片链接字段:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="${apiKey}-imageUrlField" name="${apiKey}-imageUrlField" value="${configEntry.proxySettings?.imageUrlField || ''}" placeholder="例如: data.url 或 image" ${apiKey === 'forward' ? 'readonly' : ''}>
+                    </div>
+                     <div class="col-sm-1">
+                         <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="${apiKey === 'forward' ? "对于 /forward 路由，此设置由 'field' 查询参数动态决定（默认为 'url'）。" : '用于从 JSON 响应中提取图片链接。支持用点(.)访问嵌套字段，如 "result.data.imageUrl"。如果为空，则不尝试提取。'}"></i>
+                     </div>
+                </div>`;
+             if (apiKey === 'forward') {
+                 const input = proxySettingsDiv.querySelector(`#${apiKey}-imageUrlField`);
+                 if(input) input.value = "(由 'field' 参数决定)";
+             }
+
+
+            // Fallback Action Dropdown
+            proxySettingsDiv.innerHTML += `
+                <div class="row mb-3 align-items-center">
+                    <label for="${apiKey}-fallbackAction" class="col-sm-3 col-form-label text-sm-end" title="当无法提取到图片链接时的处理方式">提取图片失败时:</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="${apiKey}-fallbackAction" name="${apiKey}-fallbackAction">
+                            <option value="returnJson" ${(configEntry.proxySettings?.fallbackAction === 'returnJson' || !configEntry.proxySettings?.fallbackAction) ? 'selected' : ''}>返回原始 JSON</option>
+                            <option value="error" ${configEntry.proxySettings?.fallbackAction === 'error' ? 'selected' : ''}>返回错误信息</option>
+                        </select>
+                    </div>
+                     <div class="col-sm-1">
+                          <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title='如果设置了“图片链接字段”但无法找到有效的图片链接，服务器应如何响应。'></i>
+                     </div>
+                </div>`;
+            cardBody.appendChild(proxySettingsDiv);
+
+            // Query Parameters Container
+            const queryParamsDiv = document.createElement('div');
+            queryParamsDiv.className = 'query-params mt-3 pt-3 border-top';
+            queryParamsDiv.innerHTML = '<h5>查询参数配置</h5>';
+            const paramsListDiv = document.createElement('div');
+            paramsListDiv.id = `${apiKey}-params-list`;
+
+            (configEntry.queryParams || []).forEach((param, index) => {
+                renderQueryParam(paramsListDiv, apiKey, param, index);
+            });
+
+            queryParamsDiv.appendChild(paramsListDiv);
+
+            const addParamButton = document.createElement('button');
+            addParamButton.type = 'button';
+            addParamButton.innerHTML = '<i class="bi bi-plus-circle"></i> 添加查询参数';
+            addParamButton.className = 'btn btn-outline-secondary btn-sm add-param-button mt-2';
+            addParamButton.onclick = () => addQueryParam(paramsListDiv, apiKey);
+            queryParamsDiv.appendChild(addParamButton);
+
+            cardBody.appendChild(queryParamsDiv);
+            card.appendChild(cardBody);
+
+
+            // Event listener to toggle proxy settings visibility
+            const methodSelect = cardBody.querySelector(`#${apiKey}-method`);
+            methodSelect.addEventListener('change', (event) => {
+                proxySettingsDiv.style.display = event.target.value === 'proxy' ? 'block' : 'none';
+            });
+
+            apiConfigsContainer.appendChild(card);
+            // Defer tooltip initialization slightly to ensure Bootstrap JS is ready
+            setTimeout(() => initializeTooltips(card), 50); 
+        }
+
+        function renderConfig() {
+            disposeAllTooltips(); 
+            apiConfigsContainer.innerHTML = '';
+            if (Object.keys(currentConfigData.apiUrls || {}).length === 0) {
+                 apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
+            } else {
+                const sortedKeys = Object.keys(currentConfigData.apiUrls).sort();
+                sortedKeys.forEach(apiKey => {
+                     renderApiEndpoint(apiKey, currentConfigData.apiUrls[apiKey]);
+                });
+            }
+            baseTagInput.value = currentConfigData.baseTag || '';
+            // Initialize global tooltips after a short delay
+            setTimeout(() => initializeTooltips(document.body), 100); 
+        }
+
+        function renderQueryParam(container, apiKey, param, index) {
+             const paramDiv = document.createElement('div');
+             paramDiv.className = 'param-item p-3 mb-3'; 
+             const uniquePrefix = `${apiKey}-param-${index}`;
+
+             paramDiv.innerHTML = `
+                <button type="button" class="btn btn-danger btn-sm remove-param-button" title="移除此参数" onclick="removeQueryParam(this)"><i class="bi bi-x-lg"></i></button>
+                <div class="row mb-2 align-items-center">
+                    <label for="${uniquePrefix}-name" class="col-sm-3 col-form-label text-sm-end" title="URL 中的参数名">参数名称:</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control form-control-sm" id="${uniquePrefix}-name" name="${uniquePrefix}-name" value="${param.name || ''}" required placeholder="例如: keyword">
+                    </div>
+                </div>
+                <div class="row mb-2 align-items-center">
+                    <label for="${uniquePrefix}-desc" class="col-sm-3 col-form-label text-sm-end" title="参数用途说明">参数描述:</label>
+                    <div class="col-sm-9">
+                        <textarea class="form-control form-control-sm" id="${uniquePrefix}-desc" name="${uniquePrefix}-desc" placeholder="例如: 搜索关键词">${param.description || ''}</textarea>
+                    </div>
+                </div>
+                 <div class="row mb-2 align-items-center">
+                    <label for="${uniquePrefix}-required" class="col-sm-3 form-check-label text-sm-end" title="请求时必须提供此参数">是否必需:</label>
+                     <div class="col-sm-9">
+                        <div class="form-check form-switch">
+                             <input class="form-check-input" type="checkbox" role="switch" id="${uniquePrefix}-required" name="${uniquePrefix}-required" ${param.required ? 'checked' : ''}>
+                        </div>
+                    </div>
+                </div>
+                 <div class="row mb-2 align-items-center">
+                    <label for="${uniquePrefix}-default" class="col-sm-3 col-form-label text-sm-end" title="未提供参数时的默认值">默认值:</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control form-control-sm" id="${uniquePrefix}-default" name="${uniquePrefix}-default" value="${param.defaultValue || ''}" placeholder="可选">
+                    </div>
+                </div>
+                 <div class="row mb-2 align-items-center">
+                    <label for="${uniquePrefix}-validValues" class="col-sm-3 col-form-label text-sm-end" title="限制参数的有效值（逗号分隔）">有效值:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control form-control-sm" id="${uniquePrefix}-validValues" name="${uniquePrefix}-validValues" value="${(param.validValues || []).join(',')}" placeholder="可选, 例如: value1,value2">
+                    </div>
+                     <div class="col-sm-1">
+                         <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title='如果填写，参数值必须是列表中的一个（用逗号分隔）。留空则不限制。'></i>
+                     </div>
+                </div>
+             `;
+             container.appendChild(paramDiv);
+             // Defer tooltip initialization for the new param item
+             setTimeout(() => initializeTooltips(paramDiv), 50); 
+        }
+
+        // --- addQueryParam, removeQueryParam, addApiEndpoint, removeApiEndpoint functions remain the same ---
+        function addQueryParam(container, apiKey) {
+            const existingParams = container.querySelectorAll('.param-item');
+            const newIndex = existingParams.length;
+            const newParam = { name: '', description: '', required: false, defaultValue: '', validValues: [] };
+            renderQueryParam(container, apiKey, newParam, newIndex);
+        }
+
+        function removeQueryParam(button) {
+            const paramItem = button.closest('.param-item');
+            if (paramItem) {
+                paramItem.remove();
+            }
+        }
+
+        function addApiEndpoint() {
+             const newApiKey = `new_endpoint_${Date.now()}`;
+             const newConfigEntry = { description: "", url: "", method: "redirect", queryParams: [], proxySettings: {} };
+             if (!apiConfigsContainer.querySelector('.card')) {
+                 apiConfigsContainer.innerHTML = '';
+             }
+             renderApiEndpoint(newApiKey, newConfigEntry);
+             const newCard = apiConfigsContainer.querySelector(`[data-api-key="${newApiKey}"]`);
+             if(newCard) {
+                 newCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                 newCard.querySelector('.api-key-input').focus();
+             }
+        }
+
+        function removeApiEndpoint(card) {
+            const apiKeyInput = card.querySelector('.api-key-input');
+            const keyToRemove = apiKeyInput ? apiKeyInput.value : '(未知)';
+            if (confirm(`确定要删除端点 "${keyToRemove}" 吗？此操作将在保存后生效且无法撤销。`)) {
+                card.remove();
+                 if (!apiConfigsContainer.querySelector('.card')) {
+                     apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
+                 }
+                showMessage(`端点 ${keyToRemove} 已标记为删除。点击“保存所有配置”以确认。`, 'success');
+            }
+        }
+
+
+        async function loadConfig() {
+            // Use Bootstrap spinner for loading indicator
+            apiConfigsContainer.innerHTML = `<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">正在加载配置...</span></div><p class="mt-2">正在加载配置...</p></div>`;
+            try {
+                const response = await fetch('/config');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                currentConfigData = await response.json();
+                if (!currentConfigData.apiUrls) currentConfigData.apiUrls = {};
+                renderConfig(); // Render the UI
+            } catch (error) {
+                console.error('Error loading config:', error);
+                apiConfigsContainer.innerHTML = '<div class="alert alert-danger">加载配置失败。</div>';
+                showMessage('加载配置失败: ' + error.message, 'error');
+            }
+        }
+
+        // --- saveConfig function remains the same ---
+        async function saveConfig(event) {
+            event.preventDefault();
+
+            const updatedApiUrls = {};
+            const cards = apiConfigsContainer.querySelectorAll('.card[data-api-key]');
+            let hasError = false;
+            const usedApiKeys = new Set();
+
+            cards.forEach(card => {
+                 if (hasError) return;
+                const apiKeyInput = card.querySelector('.api-key-input');
+                const apiKey = sanitizeApiKey(apiKeyInput.value.trim());
+                const originalApiKey = card.getAttribute('data-api-key');
+
+                 if (!apiKey) {
+                     showMessage(`错误：发现一个未命名（为空）的 API 端点！请输入路径名。`, 'error');
+                     apiKeyInput.focus(); hasError = true; return;
+                 }
+                 if (usedApiKeys.has(apiKey)) {
+                      showMessage(`错误：API 端点路径 "/${apiKey}" 重复！请确保每个端点路径唯一。`, 'error');
+                      apiKeyInput.focus(); hasError = true; return;
+                 }
+                 usedApiKeys.add(apiKey);
+
+                const urlInput = card.querySelector(`#${originalApiKey}-url`);
+                const configEntry = {
+                    description: card.querySelector(`#${originalApiKey}-description`).value.trim(),
+                    url: urlInput.value.trim(),
+                    method: card.querySelector(`#${originalApiKey}-method`).value,
+                    queryParams: [],
+                    proxySettings: {}
+                };
+
+                if (!configEntry.url) {
+                     showMessage(`错误：端点 /${apiKey} 的目标 URL 不能为空！`, 'error');
+                     urlInput.focus(); hasError = true; return;
+                }
+
+                // Collect Query Params
+                const paramItems = card.querySelectorAll(`#${originalApiKey}-params-list .param-item`);
+                const paramNames = new Set();
+                paramItems.forEach((paramItem) => {
+                     if (hasError) return;
+                     const nameInput = paramItem.querySelector(`input[id$="-name"]`);
+                     const paramName = nameInput.value.trim();
+                     if (!paramName) return;
+                     if (paramNames.has(paramName)) {
+                         showMessage(`错误：端点 /${apiKey} 存在重复的查询参数名称 "${paramName}"！`, 'error');
+                         nameInput.focus(); hasError = true; return;
+                     }
+                     paramNames.add(paramName);
+                     const descInput = paramItem.querySelector(`textarea[id$="-desc"]`);
+                     const requiredInput = paramItem.querySelector(`input[id$="-required"]`);
+                     const defaultInput = paramItem.querySelector(`input[id$="-default"]`);
+                     const validValuesInput = paramItem.querySelector(`input[id$="-validValues"]`);
+                     const validValuesString = validValuesInput.value.trim();
+                     configEntry.queryParams.push({
+                         name: paramName, description: descInput.value.trim(), required: requiredInput.checked,
+                         defaultValue: defaultInput.value.trim() || undefined,
+                         validValues: validValuesString ? validValuesString.split(',').map(s => s.trim()).filter(Boolean) : undefined
+                     });
+                });
+                 if (hasError) return;
+
+                // Collect Proxy Settings
+                if (configEntry.method === 'proxy') {
+                    const imageUrlFieldInput = card.querySelector(`#${originalApiKey}-imageUrlField`);
+                    const fallbackActionSelect = card.querySelector(`#${originalApiKey}-fallbackAction`);
+                    const originalConfigEntry = currentConfigData.apiUrls[originalApiKey];
+                    if (apiKey === 'forward' && originalConfigEntry?.proxySettings?.imageUrlFieldFromParam) {
+                         configEntry.proxySettings.imageUrlFieldFromParam = originalConfigEntry.proxySettings.imageUrlFieldFromParam;
+                    } else if (imageUrlFieldInput) {
+                         configEntry.proxySettings.imageUrlField = imageUrlFieldInput.value.trim() || undefined;
+                    }
+                    configEntry.proxySettings.fallbackAction = fallbackActionSelect?.value || 'returnJson';
+                }
+
+                 const originalConfig = currentConfigData.apiUrls[originalApiKey];
+                 if (originalConfig?.urlConstruction) { configEntry.urlConstruction = originalConfig.urlConstruction; }
+                 if (originalConfig?.modelName) { configEntry.modelName = originalConfig.modelName; }
+
+                updatedApiUrls[apiKey] = configEntry;
+            });
+
+            if (hasError) { console.error("Validation errors found. Aborting save."); return; }
+
+            const updatedConfig = { apiUrls: updatedApiUrls, baseTag: baseTagInput.value.trim() };
+            console.log("Saving config:", JSON.stringify(updatedConfig, null, 2));
+
+            const saveButton = form.querySelector('.save-button');
+            saveButton.disabled = true;
+            saveButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...`;
+
+            try {
+                const response = await fetch('/config', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedConfig),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP error! status: ${response.status}`);
+                showMessage(result.message || '配置已成功更新！所有更改已动态生效。', 'success');
+                await loadConfig(); 
+            } catch (error) {
+                console.error('Error saving config:', error);
+                showMessage('保存配置失败: ' + error.message, 'error');
+            } finally {
+                 saveButton.disabled = false;
+                 saveButton.innerHTML = `<i class="bi bi-save"></i> 保存所有配置`;
+            }
+        }
+
+        form.addEventListener('submit', saveConfig);
+        // Use DOMContentLoaded to ensure the initial structure is ready before loading config
+        document.addEventListener('DOMContentLoaded', loadConfig);
+    </script>
+</body>
+</html>
