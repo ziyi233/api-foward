@@ -25,6 +25,7 @@
         .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
         .add-endpoint-button { margin-bottom: 1.5rem; }
         .group-title { margin-top: 2rem; margin-bottom: 1rem; font-size: 1.5rem; color: #6c757d; border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem; }
+        .global-setting-item { padding: 1rem; border: 1px solid #cfe2ff; background-color: #ecf5ff; border-radius: 0.375rem; margin-bottom: 1.5rem; }
     </style>
 </head>
 <body>
@@ -46,22 +47,21 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">全局设置</div>
-                <div class="card-body">
-                     <div class="row mb-3 align-items-center">
-                         <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">全局基础 Tag:</label>
-                         <div class="col-sm-8">
-                             <input type="text" class="form-control" id="baseTag" name="baseTag" placeholder="例如: masterpiece%20best%20quality">
-                         </div>
-                         <div class="col-sm-1">
-                              <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="这个 Tag 会自动附加到 AI 绘图请求的末尾，以提升图像质量。请使用 URL 编码格式。"></i>
-                         </div>
+            <!-- Global settings will be injected into the correct group by JS -->
+            <div id="global-settings-placeholder" style="display: none;">
+                 <div class="row mb-3 align-items-center global-setting-item">
+                     <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">全局基础 Tag:</label>
+                     <div class="col-sm-8">
+                         <input type="text" class="form-control" id="baseTag" name="baseTag" placeholder="例如: masterpiece%20best%20quality">
                      </div>
-                </div>
+                     <div class="col-sm-1">
+                          <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="这个 Tag 会自动附加到 AI 绘图请求的末尾，以提升图像质量。请使用 URL 编码格式。"></i>
+                     </div>
+                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 btn-lg save-button">
+
+            <button type="submit" class="btn btn-primary w-100 btn-lg save-button mt-4">
                 <i class="bi bi-save"></i> 保存所有配置
             </button>
         </form>
@@ -74,7 +74,9 @@
     <script>
         const form = document.getElementById('config-form');
         const apiConfigsContainer = document.getElementById('api-configs-container');
-        const baseTagInput = document.getElementById('baseTag');
+        // Get baseTag input from placeholder initially
+        const globalSettingsPlaceholder = document.getElementById('global-settings-placeholder');
+        const baseTagInput = globalSettingsPlaceholder.querySelector('#baseTag'); 
         const messageDiv = document.getElementById('message');
         let currentConfigData = { apiUrls: {}, baseTag: "" };
         let bootstrapTooltipList = []; 
@@ -142,7 +144,8 @@
                     </div>
                 </div>`;
 
-            // Description
+            // Description, URL, Method... (rest of the innerHTML generation is the same as before)
+             // Description
             cardBody.innerHTML += `
                 <div class="row mb-3 align-items-center">
                     <label for="${apiKey}-description" class="col-sm-3 col-form-label text-sm-end" title="这个 API 端点的用途说明">描述:</label>
@@ -200,6 +203,7 @@
                  if(input) input.value = "(由 'field' 参数决定)";
              }
 
+
             // Fallback Action Dropdown
             proxySettingsDiv.innerHTML += `
                 <div class="row mb-3 align-items-center">
@@ -239,13 +243,14 @@
             cardBody.appendChild(queryParamsDiv);
             card.appendChild(cardBody);
 
+
             // Event listener to toggle proxy settings visibility
             const methodSelect = cardBody.querySelector(`#${apiKey}-method`);
             methodSelect.addEventListener('change', (event) => {
                 proxySettingsDiv.style.display = event.target.value === 'proxy' ? 'block' : 'none';
             });
 
-            return card; // Return the created card element
+            return card; 
         }
 
         function renderConfig() {
@@ -255,19 +260,14 @@
             const apiUrls = currentConfigData.apiUrls || {};
             const groupedEndpoints = {};
 
-            // Group endpoints
             for (const apiKey in apiUrls) {
                 const entry = apiUrls[apiKey];
-                const group = entry.group || '未分组'; // Default group
-                if (!groupedEndpoints[group]) {
-                    groupedEndpoints[group] = [];
-                }
+                const group = entry.group || '未分组'; 
+                if (!groupedEndpoints[group]) { groupedEndpoints[group] = []; }
                 groupedEndpoints[group].push({ key: apiKey, config: entry });
             }
 
-            // Sort groups (optional: specific order or alphabetical)
             const sortedGroups = Object.keys(groupedEndpoints).sort((a, b) => {
-                 // Define a custom sort order if needed, e.g., put '通用转发' first
                  const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '未分组': 99};
                  return (order[a] || 99) - (order[b] || 99);
             });
@@ -275,24 +275,40 @@
             if (sortedGroups.length === 0) {
                  apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
             } else {
-                // Render endpoints grouped by category
                 sortedGroups.forEach(groupName => {
+                    const groupContainer = document.createElement('div'); // Container for the group
+                    groupContainer.id = `group-${groupName.replace(/\s+/g, '-')}`; // Create an ID for the group container
+
                     const groupTitle = document.createElement('h2');
                     groupTitle.className = 'group-title';
                     groupTitle.textContent = groupName;
-                    apiConfigsContainer.appendChild(groupTitle);
+                    groupContainer.appendChild(groupTitle); // Add title to group container
 
-                    // Sort endpoints within the group alphabetically by key
+                    // Inject Global Settings into AI Group
+                    if (groupName === 'AI绘图') {
+                         const globalSettingElement = globalSettingsPlaceholder.querySelector('.global-setting-item').cloneNode(true);
+                         groupContainer.appendChild(globalSettingElement);
+                    }
+
+                    // Sort and render endpoints within the group
                     groupedEndpoints[groupName].sort((a, b) => a.key.localeCompare(b.key)); 
-
                     groupedEndpoints[groupName].forEach(item => {
                         const cardElement = renderApiEndpoint(item.key, item.config);
-                        apiConfigsContainer.appendChild(cardElement);
+                        groupContainer.appendChild(cardElement); // Add card to group container
                     });
+                    
+                    apiConfigsContainer.appendChild(groupContainer); // Add the whole group container
                 });
             }
             
-            baseTagInput.value = currentConfigData.baseTag || '';
+            // Ensure baseTagInput refers to the one potentially moved into the DOM
+            const finalBaseTagInput = document.getElementById('baseTag'); 
+            if (finalBaseTagInput) {
+                 finalBaseTagInput.value = currentConfigData.baseTag || '';
+            } else {
+                 console.error("BaseTag input element not found after rendering!");
+            }
+            
             setTimeout(() => initializeTooltips(document.body), 100); 
         }
 
@@ -369,11 +385,11 @@
                  groupTitle.textContent = '未分组';
                  apiConfigsContainer.appendChild(groupTitle);
                  ungroupedContainer = document.createElement('div');
-                 ungroupedContainer.id = 'group-未分组';
+                 ungroupedContainer.id = 'group-未分组'; // Assign ID to the container
                  apiConfigsContainer.appendChild(ungroupedContainer);
              }
              const cardElement = renderApiEndpoint(newApiKey, newConfigEntry);
-             ungroupedContainer.appendChild(cardElement); // Append to the correct group container
+             ungroupedContainer.appendChild(cardElement); 
              
              cardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
              cardElement.querySelector('.api-key-input').focus();
@@ -388,12 +404,11 @@
                  if (!apiConfigsContainer.querySelector('.card')) {
                      apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
                  } else if (parentGroupContainer && !parentGroupContainer.querySelector('.card')) {
-                      // If the group becomes empty, remove the group title as well
                       const groupTitle = parentGroupContainer.previousElementSibling;
                       if (groupTitle && groupTitle.classList.contains('group-title')) {
                           groupTitle.remove();
                       }
-                      parentGroupContainer.remove(); // Remove the empty group container
+                      parentGroupContainer.remove(); 
                  }
                 showMessage(`端点 ${keyToRemove} 已标记为删除。点击“保存所有配置”以确认。`, 'success');
             }
@@ -434,7 +449,7 @@
 
                 const urlInput = card.querySelector(`#${originalApiKey}-url`);
                 const configEntry = {
-                    group: card.querySelector(`#${originalApiKey}-group`).value.trim() || '未分组', // Save group
+                    group: card.querySelector(`#${originalApiKey}-group`).value.trim() || '未分组', 
                     description: card.querySelector(`#${originalApiKey}-description`).value.trim(),
                     url: urlInput.value.trim(),
                     method: card.querySelector(`#${originalApiKey}-method`).value,
@@ -444,7 +459,7 @@
 
                 if (!configEntry.url) { showMessage(`错误：端点 /${apiKey} 的目标 URL 不能为空！`, 'error'); urlInput.focus(); hasError = true; return; }
 
-                // Collect Query Params
+                // Collect Query Params... (same as before)
                 const paramItems = card.querySelectorAll(`#${originalApiKey}-params-list .param-item`);
                 const paramNames = new Set();
                 paramItems.forEach((paramItem) => {
@@ -467,7 +482,8 @@
                 });
                  if (hasError) return;
 
-                // Collect Proxy Settings
+
+                // Collect Proxy Settings... (same as before)
                 if (configEntry.method === 'proxy') {
                     const imageUrlFieldInput = card.querySelector(`#${originalApiKey}-imageUrlField`);
                     const fallbackActionSelect = card.querySelector(`#${originalApiKey}-fallbackAction`);
@@ -489,7 +505,12 @@
 
             if (hasError) { console.error("Validation errors found. Aborting save."); return; }
 
-            const updatedConfig = { apiUrls: updatedApiUrls, baseTag: baseTagInput.value.trim() };
+            // Find the potentially moved baseTag input
+            const currentBaseTagInput = document.getElementById('baseTag');
+            const updatedConfig = { 
+                apiUrls: updatedApiUrls, 
+                baseTag: currentBaseTagInput ? currentBaseTagInput.value.trim() : '' // Get value from current location
+            };
             console.log("Saving config:", JSON.stringify(updatedConfig, null, 2));
 
             const saveButton = form.querySelector('.save-button');
