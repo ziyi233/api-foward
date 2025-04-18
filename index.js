@@ -93,7 +93,22 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname)); // Serve static files like admin.html, config.json (for loading)
+// Serve static files like config.json (for loading in admin page)
+// We will handle admin.html explicitly below.
+app.use(express.static(path.join(__dirname))); 
+
+// --- Explicit route for admin.html ---
+app.get('/admin.html', (req, res) => {
+    const adminPath = path.join(__dirname, 'admin.html');
+    fs.readFile(adminPath, 'utf8', (err, data) => {
+        if (err) {
+            console.error("Error reading admin.html:", err);
+            return res.status(500).send('Error loading admin page.');
+        }
+        res.setHeader('Content-Type', 'text/html');
+        res.send(data);
+    });
+});
 
 // --- Configuration Management API ---
 app.get('/config', (req, res) => {
@@ -146,8 +161,10 @@ app.get('/:apiKey', async (req, res, next) => {
          console.log(`[Router] Passing /config request to dedicated handler.`);
          return next();
      }
-     if (apiKey === 'admin.html') { // Let express.static handle this
-         console.log(`[Router] Passing /admin.html request to static handler.`);
+     // We now handle /admin.html explicitly above, so this check is less critical
+     // but doesn't hurt to keep for clarity or if express.static somehow catches it first.
+     if (apiKey === 'admin.html') {
+         console.log(`[Router] Passing /admin.html request to dedicated handler.`);
          return next();
      }
      // Add other potential static files or system routes here if needed
