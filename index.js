@@ -3,23 +3,102 @@ const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { MongoClient } = require('mongodb');
+
+// --- MongoDB Configuration ---
+// 从环境变量中读取MongoDB连接信息
+const mongoUri = process.env.MONGODB_URI;
+const dbName = process.env.MONGODB_DB_NAME || "api-forward";
+const collectionName = process.env.MONGODB_COLLECTION_NAME || "config";
+
+// 检查是否提供了必要的环境变量
+if (!mongoUri) {
+    console.warn("警告: 未设置MONGODB_URI环境变量。MongoDB功能将不可用，仅使用本地文件存储配置。");
+}
+
+// 仅当提供了MongoDB URI时才创建客户端
+const mongoClient = mongoUri ? new MongoClient(mongoUri) : null;
+
+// 安全地记录配置信息，不显示敏感信息
+if (mongoUri) {
+    const hiddenUri = mongoUri.includes('@') 
+        ? `${mongoUri.substring(0, mongoUri.indexOf('://') + 3)}[CREDENTIALS_HIDDEN]${mongoUri.substring(mongoUri.indexOf('@'))}`
+        : "[MONGODB_URI_HIDDEN]";
+    console.log(`MongoDB配置: URI=${hiddenUri}, DB=${dbName}, Collection=${collectionName}`);
+}
 
 // --- Configuration Loading ---
 const configPath = path.join(__dirname, 'config.json');
 let currentConfig = {};
 
-function loadConfig() {
+async function loadConfig() {
+    // 尝试从MongoDB加载配置（如果MongoDB客户端存在）
+    if (mongoClient) {
+        try {
+            await mongoClient.connect();
+            const db = mongoClient.db(dbName);
+            const collection = db.collection(collectionName);
+            const doc = await collection.findOne({});
+            
+            if (doc && doc.data) {
+                currentConfig = doc.data;
+                console.log("Configuration loaded from MongoDB.");
+                
+                // 备份到本地文件
+                fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2), 'utf8');
+                console.log("Configuration backed up to local file.");
+                return; // 成功加载，提前返回
+            } else {
+                console.log("No configuration found in MongoDB.");
+            }
+        } catch (mongoError) {
+            console.error("Error connecting to MongoDB:", mongoError);
+        } finally {
+            try {
+                await mongoClient.close();
+            } catch (error) {
+                console.error("Error closing MongoDB connection:", error);
+            }
+        }
+    } else {
+        console.log("MongoDB client not initialized. Using local file only.");
+    }
+    
+    // 从本地文件加载（作为备份或当MongoDB不可用时）
     try {
         const rawData = fs.readFileSync(configPath, 'utf8');
         currentConfig = JSON.parse(rawData);
-        console.log("Configuration loaded successfully.");
-    } catch (error) {
-        console.error("Error loading configuration:", error);
+        console.log("Configuration loaded from local file.");
+        
+        // 如果MongoDB客户端存在，尝试将本地配置保存到MongoDB
+        if (mongoClient) {
+            try {
+                await mongoClient.connect();
+                const db = mongoClient.db(dbName);
+                const collection = db.collection(collectionName);
+                await collection.updateOne({}, { $set: { data: currentConfig } }, { upsert: true });
+                console.log("Local configuration saved to MongoDB.");
+            } catch (saveError) {
+                console.error("Error saving local configuration to MongoDB:", saveError);
+            } finally {
+                try {
+                    await mongoClient.close();
+                } catch (error) {
+                    console.error("Error closing MongoDB connection:", error);
+                }
+            }
+        }
+    } catch (fileError) {
+        console.error("Error loading configuration from file:", fileError);
         currentConfig = { apiUrls: {}, baseTag: "" };
+        console.log("Using default empty configuration.");
     }
 }
 
-loadConfig(); // Load initial config
+// Load initial config
+(async () => {
+    await loadConfig();
+})();
 
 // --- Utility Functions ---
 function getValueByDotNotation(obj, path) {
@@ -103,29 +182,75 @@ app.get('/config', (req, res) => {
     res.json(currentConfig);
 });
 
-app.post('/config', (req, res) => {
+app.post('/config', async (req, res) => {
     const newConfig = req.body;
     if (!newConfig || typeof newConfig !== 'object' || !newConfig.apiUrls) {
         return res.status(400).json({ error: 'Invalid configuration format.' });
     }
     try {
-        // Update in-memory config FIRST
+        // 首先更新内存中的配置
         currentConfig = newConfig;
-        // Write updated config back to file (asynchronously)
+        
+        // 尝试保存到MongoDB（如果MongoDB客户端存在）
+        let mongoSuccess = false;
+        if (mongoClient) {
+            try {
+                await mongoClient.connect();
+                const db = mongoClient.db(dbName);
+                const collection = db.collection(collectionName);
+                await collection.updateOne({}, { $set: { data: currentConfig } }, { upsert: true });
+                console.log("Configuration saved to MongoDB.");
+                mongoSuccess = true;
+            } catch (mongoError) {
+                console.error('Error saving to MongoDB:', mongoError);
+            } finally {
+                try {
+                    await mongoClient.close();
+                } catch (error) {
+                    console.error("Error closing MongoDB connection:", error);
+                }
+            }
+        } else {
+            console.log("MongoDB client not initialized. Skipping MongoDB save.");
+        }
+        
+        // 同时写入本地文件作为备份
         fs.writeFile(configPath, JSON.stringify(currentConfig, null, 2), 'utf8', (err) => {
             if (err) {
                 console.error('Error writing config file:', err);
-                // Attempt to reload previous config if write fails? Or just log error.
-                // loadConfig(); // Revert in-memory config if write fails? Risky.
-                // For now, just report error but keep in-memory change.
-                 res.status(500).json({ error: 'Failed to save configuration file, but in-memory config updated.' });
+                if (mongoClient && !mongoSuccess) {
+                    // MongoDB可用但保存失败，且文件写入也失败
+                    return res.status(500).json({ 
+                        error: 'Failed to save configuration to both MongoDB and file, but in-memory config updated.' 
+                    });
+                } else if (mongoClient) {
+                    // MongoDB可用且保存成功，但文件写入失败
+                    return res.json({ 
+                        message: 'Configuration saved to MongoDB but backup to file failed. Changes are now live.' 
+                    });
+                } else {
+                    // MongoDB不可用，且文件写入失败
+                    return res.status(500).json({ 
+                        error: 'Failed to save configuration to file and MongoDB is not available. In-memory config is updated.' 
+                    });
+                }
             } else {
-                 console.log("Configuration updated and saved to file.");
-                 res.json({ message: 'Configuration updated successfully. Changes are now live.' });
+                console.log("Configuration saved to local file.");
+                if (mongoClient) {
+                    return res.json({ 
+                        message: mongoSuccess 
+                            ? 'Configuration updated successfully and saved to both MongoDB and file. Changes are now live.' 
+                            : 'Configuration saved to file but MongoDB update failed. Changes are now live.'
+                    });
+                } else {
+                    return res.json({ 
+                        message: 'Configuration saved to local file. MongoDB is not available. Changes are now live.'
+                    });
+                }
             }
         });
     } catch (error) {
-        // Catch potential errors during in-memory update or JSON stringify
+        // 捕获内存更新或JSON序列化过程中的潜在错误
         console.error('Error processing new configuration:', error);
         res.status(500).json({ error: 'Failed to process new configuration.' });
     }
