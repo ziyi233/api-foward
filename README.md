@@ -63,6 +63,7 @@ docker-compose up -d
 | `MONGODB_DB_NAME` | 是 | MongoDB数据库名称，默认为`api-forward` |
 | `MONGODB_COLLECTION_NAME` | 是 | MongoDB集合名称，默认为`config` |
 | `ENABLE_FILE_OPERATIONS` | 否 | 是否启用文件操作，在Vercel环境中应设置为`false`或不设置 |
+| `ADMIN_TOKEN` | 否 | 管理界面的访问令牌，默认为`admin` |
 
 
 > **注意**：由于Vercel的文件系统是只读的，必须使用MongoDB来存储配置。
@@ -124,9 +125,10 @@ GET /forward?url=https://api-endpoint.com&field=image
 GET /flux?tags=beautiful,landscape
 ```
 
+使用Flux模型生成图片（2D风格），标签用逗号分隔。
+
 ![Flux模型示例](https://api-foward.vercel.app/flux?tags=beautiful,landscape)
 
-使用Flux模型生成图片（2D风格），标签用逗号分隔。
 
 ```http
 GET /turbo?tags=beautiful,landscape

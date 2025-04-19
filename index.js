@@ -32,6 +32,12 @@ if (mongoUri) {
 // 设置 ENABLE_FILE_OPERATIONS=true 来允许文件操作
 const enableFileOperations = process.env.ENABLE_FILE_OPERATIONS === 'true';
 
+// --- 管理界面鉴权配置 ---
+// 从环境变量中读取管理员token，如果不存在则使用默认值“admin”
+const adminToken = process.env.ADMIN_TOKEN || 'admin';
+// 管理界面的cookie名称
+const adminCookieName = 'api_forward_admin_token';
+
 // --- Configuration Loading ---
 const configPath = path.join(__dirname, 'config.json');
 let currentConfig = {};
@@ -185,17 +191,19 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+// 添加cookie解析中间件
+app.use(require('cookie-parser')());
 // Serve static files like config.json (for loading in admin page)
 // We will handle admin.html explicitly below.
 app.use(express.static(path.join(__dirname)));
 
 // --- Configuration Management API ---
-app.get('/config', (req, res) => {
+app.get('/config', checkAdminAuth, (req, res) => {
     // Send the current in-memory config
     res.json(currentConfig);
 });
 
-app.post('/config', async (req, res) => {
+app.post('/config', checkAdminAuth, async (req, res) => {
     const newConfig = req.body;
     if (!newConfig || typeof newConfig !== 'object' || !newConfig.apiUrls) {
         return res.status(400).json({ error: 'Invalid configuration format.' });
@@ -579,8 +587,145 @@ app.get('/', (req, res) => {
     res.send(homeHtmlContent);
 });
 
-// --- Admin Interface Route ---
-app.get('/admin', (req, res) => {
+// --- Admin Interface Routes ---
+// 验证管理员权限的中间件
+function checkAdminAuth(req, res, next) {
+    // 检查cookie中的token
+    const tokenFromCookie = req.cookies?.[adminCookieName];
+    
+    // 如果有效token，允许访问
+    if (tokenFromCookie === adminToken) {
+        return next();
+    }
+    
+    // 如果是API请求，返回401状态码
+    if (req.path.startsWith('/config') || req.headers.accept?.includes('application/json')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // 否则重定向到登录页面
+    res.redirect('/admin-login');
+}
+
+// 登录页面
+app.get('/admin-login', (req, res) => {
+    console.log("[Router] Handling request for /admin-login");
+    const loginHtmlContent = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 转发管理登录</title>
+    <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+    <style>
+        body { 
+            background-color: #f8f9fa; 
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h2>API 转发管理登录</h2>
+            <p class="text-muted">请输入管理员令牌进行登录</p>
+        </div>
+        <div id="error-message" class="error-message"></div>
+        <form id="login-form">
+            <div class="mb-3">
+                <label for="token" class="form-label">管理令牌</label>
+                <input type="password" class="form-control" id="token" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">登录</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = document.getElementById('token').value;
+            
+            try {
+                const response = await fetch('/admin-auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+                
+                if (response.ok) {
+                    // 登录成功，重定向到管理页面
+                    window.location.href = '/admin';
+                } else {
+                    // 显示错误信息
+                    const data = await response.json();
+                    errorMessage.textContent = data.error || '登录失败，请检查令牌是否正确';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = '登录请求失败，请重试';
+                errorMessage.style.display = 'block';
+                console.error('Login error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
+    `;
+    res.setHeader('Content-Type', 'text/html');
+    res.send(loginHtmlContent);
+});
+
+// 处理登录请求
+app.post('/admin-auth', express.json(), (req, res) => {
+    const { token } = req.body;
+    
+    if (token === adminToken) {
+        // 设置cookie，有效期24小时
+        res.cookie(adminCookieName, token, { 
+            maxAge: 24 * 60 * 60 * 1000, // 24小时
+            httpOnly: true,
+            sameSite: 'strict'
+        });
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ error: '无效的管理令牌' });
+    }
+});
+
+// 管理员退出
+app.get('/admin-logout', (req, res) => {
+    res.clearCookie(adminCookieName);
+    res.redirect('/admin-login');
+});
+
+// 管理界面（需要验证）
+app.get('/admin', checkAdminAuth, (req, res) => {
     console.log("[Router] Handling request for /admin (Admin Interface)");
     const adminHtmlContent = `
 <!DOCTYPE html>
