@@ -113,11 +113,6 @@ async function loadConfig() {
     }
 }
 
-// Load initial config
-(async () => {
-    await loadConfig();
-})();
-
 // --- Utility Functions ---
 function getValueByDotNotation(obj, path) {
     if (!path) return undefined;
@@ -1137,7 +1132,20 @@ app.get('/admin', (req, res) => {
 
 
 // --- Server Start ---
-app.listen(PORT, () => {
-    console.log(`API Forwarder running on http://localhost:${PORT}`);
-    console.log(`Admin interface available at http://localhost:${PORT}/admin`);
-});
+// 确保在服务器启动前先加载配置
+(async () => {
+    try {
+        console.log('Loading configuration before starting server...');
+        await loadConfig();
+        console.log('Configuration loaded successfully.');
+        
+        // 启动服务器
+        app.listen(PORT, () => {
+            console.log(`API Forwarder running on http://localhost:${PORT}`);
+            console.log(`Admin interface available at http://localhost:${PORT}/admin`);
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+})();
