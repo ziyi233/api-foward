@@ -27,11 +27,18 @@ if (mongoUri) {
     console.log(`MongoDB配置: URI=${hiddenUri}, DB=${dbName}, Collection=${collectionName}`);
 }
 
+// --- 环境配置 ---
+// 是否允许文件操作（默认不允许，适合Vercel等只读环境）
+// 设置 ENABLE_FILE_OPERATIONS=true 来允许文件操作
+const enableFileOperations = process.env.ENABLE_FILE_OPERATIONS === 'true';
+
 // --- Configuration Loading ---
 const configPath = path.join(__dirname, 'config.json');
 let currentConfig = {};
 
 async function loadConfig() {
+    let configLoaded = false;
+    
     // 尝试从MongoDB加载配置（如果MongoDB客户端存在）
     if (mongoClient) {
         try {
@@ -43,13 +50,34 @@ async function loadConfig() {
             if (doc && doc.data) {
                 currentConfig = doc.data;
                 console.log("Configuration loaded from MongoDB.");
+                configLoaded = true;
                 
-                // 备份到本地文件
-                fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2), 'utf8');
-                console.log("Configuration backed up to local file.");
-                return; // 成功加载，提前返回
+                // 如果允许文件操作，备份到本地文件
+                if (enableFileOperations) {
+                    try {
+                        fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2), 'utf8');
+                        console.log("Configuration backed up to local file.");
+                    } catch (writeError) {
+                        console.error("Error backing up configuration to file:", writeError);
+                    }
+                }
             } else {
                 console.log("No configuration found in MongoDB.");
+                // MongoDB中没有配置，尝试从本地文件加载并写入MongoDB
+                try {
+                    if (fs.existsSync(configPath)) {
+                        const rawData = fs.readFileSync(configPath, 'utf8');
+                        currentConfig = JSON.parse(rawData);
+                        console.log("Configuration loaded from local file and will be saved to MongoDB.");
+                        
+                        // 将本地配置写入MongoDB
+                        await collection.updateOne({}, { $set: { data: currentConfig } }, { upsert: true });
+                        console.log("Local configuration saved to MongoDB.");
+                        configLoaded = true;
+                    }
+                } catch (fileError) {
+                    console.error("Error loading configuration from local file:", fileError);
+                }
             }
         } catch (mongoError) {
             console.error("Error connecting to MongoDB:", mongoError);
@@ -61,37 +89,27 @@ async function loadConfig() {
             }
         }
     } else {
-        console.log("MongoDB client not initialized. Using local file only.");
+        console.log("MongoDB client not initialized.");
     }
     
-    // 从本地文件加载（作为备份或当MongoDB不可用时）
-    try {
-        const rawData = fs.readFileSync(configPath, 'utf8');
-        currentConfig = JSON.parse(rawData);
-        console.log("Configuration loaded from local file.");
-        
-        // 如果MongoDB客户端存在，尝试将本地配置保存到MongoDB
-        if (mongoClient) {
-            try {
-                await mongoClient.connect();
-                const db = mongoClient.db(dbName);
-                const collection = db.collection(collectionName);
-                await collection.updateOne({}, { $set: { data: currentConfig } }, { upsert: true });
-                console.log("Local configuration saved to MongoDB.");
-            } catch (saveError) {
-                console.error("Error saving local configuration to MongoDB:", saveError);
-            } finally {
-                try {
-                    await mongoClient.close();
-                } catch (error) {
-                    console.error("Error closing MongoDB connection:", error);
-                }
+    // 如果配置还未加载且允许文件操作，尝试从本地文件加载
+    if (!configLoaded && enableFileOperations) {
+        try {
+            if (fs.existsSync(configPath)) {
+                const rawData = fs.readFileSync(configPath, 'utf8');
+                currentConfig = JSON.parse(rawData);
+                console.log("Configuration loaded from local file.");
+                configLoaded = true;
             }
+        } catch (fileError) {
+            console.error("Error loading configuration from file:", fileError);
         }
-    } catch (fileError) {
-        console.error("Error loading configuration from file:", fileError);
+    }
+    
+    // 如果配置仍然未加载，使用默认空配置
+    if (!configLoaded) {
+        console.log("No configuration found. Using default empty configuration.");
         currentConfig = { apiUrls: {}, baseTag: "" };
-        console.log("Using default empty configuration.");
     }
 }
 
@@ -214,41 +232,62 @@ app.post('/config', async (req, res) => {
             console.log("MongoDB client not initialized. Skipping MongoDB save.");
         }
         
-        // 同时写入本地文件作为备份
-        fs.writeFile(configPath, JSON.stringify(currentConfig, null, 2), 'utf8', (err) => {
-            if (err) {
-                console.error('Error writing config file:', err);
-                if (mongoClient && !mongoSuccess) {
-                    // MongoDB可用但保存失败，且文件写入也失败
-                    return res.status(500).json({ 
-                        error: 'Failed to save configuration to both MongoDB and file, but in-memory config updated.' 
-                    });
-                } else if (mongoClient) {
-                    // MongoDB可用且保存成功，但文件写入失败
+        // 如果允许文件操作，尝试写入本地文件作为备份
+        if (enableFileOperations) {
+            fs.writeFile(configPath, JSON.stringify(currentConfig, null, 2), 'utf8', (err) => {
+                if (err) {
+                    console.error('Error writing config file:', err);
+                    if (mongoClient && !mongoSuccess) {
+                        // MongoDB可用但保存失败，且文件写入也失败
+                        return res.status(500).json({ 
+                            error: 'Failed to save configuration to both MongoDB and file, but in-memory config updated.' 
+                        });
+                    } else if (mongoClient) {
+                        // MongoDB可用且保存成功，但文件写入失败
+                        return res.json({ 
+                            message: 'Configuration saved to MongoDB but backup to file failed. Changes are now live.' 
+                        });
+                    } else {
+                        // MongoDB不可用，且文件写入失败
+                        return res.status(500).json({ 
+                            error: 'Failed to save configuration to file and MongoDB is not available. In-memory config is updated.' 
+                        });
+                    }
+                } else {
+                    console.log("Configuration saved to local file.");
+                    if (mongoClient) {
+                        return res.json({ 
+                            message: mongoSuccess 
+                                ? 'Configuration updated successfully and saved to both MongoDB and file. Changes are now live.' 
+                                : 'Configuration saved to file but MongoDB update failed. Changes are now live.'
+                        });
+                    } else {
+                        return res.json({ 
+                            message: 'Configuration saved to local file. MongoDB is not available. Changes are now live.'
+                        });
+                    }
+                }
+            });
+        } else {
+            // 不允许文件操作，只依赖MongoDB
+            console.log("File operations disabled, skipping file write operations.");
+            if (mongoClient) {
+                if (mongoSuccess) {
                     return res.json({ 
-                        message: 'Configuration saved to MongoDB but backup to file failed. Changes are now live.' 
+                        message: 'Configuration saved to MongoDB. Changes are now live.' 
                     });
                 } else {
-                    // MongoDB不可用，且文件写入失败
                     return res.status(500).json({ 
-                        error: 'Failed to save configuration to file and MongoDB is not available. In-memory config is updated.' 
+                        error: 'Failed to save configuration to MongoDB, but in-memory config updated.' 
                     });
                 }
             } else {
-                console.log("Configuration saved to local file.");
-                if (mongoClient) {
-                    return res.json({ 
-                        message: mongoSuccess 
-                            ? 'Configuration updated successfully and saved to both MongoDB and file. Changes are now live.' 
-                            : 'Configuration saved to file but MongoDB update failed. Changes are now live.'
-                    });
-                } else {
-                    return res.json({ 
-                        message: 'Configuration saved to local file. MongoDB is not available. Changes are now live.'
-                    });
-                }
+                // 没有MongoDB配置且不允许文件操作
+                return res.status(500).json({ 
+                    error: 'No persistent storage available. Configuration only updated in memory and will be lost on server restart.' 
+                });
             }
-        });
+        }
     } catch (error) {
         // 捕获内存更新或JSON序列化过程中的潜在错误
         console.error('Error processing new configuration:', error);
