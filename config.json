@@ -14,17 +14,6 @@
         "fallbackAction": "returnJson"
       }
     },
-    "doro": {
-      "group": "表情包",
-      "description": "doro.asia 的随机贴纸",
-      "url": "https://www.doro.asia/api/random-sticker",
-      "method": "proxy",
-      "queryParams": [],
-      "proxySettings": {
-        "imageUrlField": "sticker.url",
-        "fallbackAction": "error"
-      }
-    },
     "flux": {
       "group": "AI绘图",
       "description": "AI 绘图 - Flux 模型 (2D)",
@@ -93,17 +82,234 @@
       "method": "redirect",
       "queryParams": []
     },
-    "maomao": {
-      "group": "表情包",
-      "description": "柴郡表情包",
-      "url": "https://uapis.cn/api/imgapi/bq/maomao.php",
-      "method": "redirect",
-      "queryParams": []
-    },
     "nailong": {
       "group": "表情包",
       "description": "奶龙表情包",
       "url": "https://oiapi.net/API/FunBoxEmoji/?0=nailong",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "doro": {
+      "group": "表情包",
+      "description": "Doro表情包",
+      "url": "https://pic.696898.xyz/pic?type=doro",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "capoo": {
+      "group": "表情包",
+      "description": "Capoo表情包",
+      "url": "https://pic.696898.xyz/pic?type=capoo",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "cat": {
+      "group": "表情包",
+      "description": "猫咪表情包",
+      "url": "https://pic.696898.xyz/pic?type=cat",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "chiikawa": {
+      "group": "表情包",
+      "description": "Chiikawa表情包",
+      "url": "https://pic.696898.xyz/pic?type=chiikawa",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "maomao": {
+      "group": "表情包",
+      "description": "柴郡表情包",
+      "url": "https://pic.696898.xyz/pic?type=柴郡",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "2233": {
+      "group": "表情包",
+      "description": "2233娘小剧场",
+      "url": "https://pic.696898.xyz/pic?type=2233娘小剧场",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "fufu": {
+      "group": "表情包",
+      "description": "Fufu表情包",
+      "url": "https://pic.696898.xyz/pic?type=fufu",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "kemomimi": {
+      "group": "表情包",
+      "description": "Kemomimi酱表情包",
+      "url": "https://pic.696898.xyz/pic?type=kemomimi酱表情包",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "mygo": {
+      "group": "二次元图片",
+      "description": "MyGO图片",
+      "url": "https://pic.696898.xyz/pic?type=mygo",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "seseren": {
+      "group": "表情包",
+      "description": "Seseren表情包",
+      "url": "https://pic.696898.xyz/pic?type=seseren",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "yatori": {
+      "group": "表情包",
+      "description": "亚托莉表情包",
+      "url": "https://pic.696898.xyz/pic?type=亚托莉",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "miku": {
+      "group": "表情包",
+      "description": "初音未来Q表情包",
+      "url": "https://pic.696898.xyz/pic?type=初音未来Q",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "karapicu": {
+      "group": "表情包",
+      "description": "卡拉彼丘表情包",
+      "url": "https://pic.696898.xyz/pic?type=卡拉彼丘",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "xiaohei": {
+      "group": "表情包",
+      "description": "小黑子表情包",
+      "url": "https://pic.696898.xyz/pic?type=小黑子",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "xinhai": {
+      "group": "表情包",
+      "description": "心海表情包",
+      "url": "https://pic.696898.xyz/pic?type=心海",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "yongchuxiaofei": {
+      "group": "表情包",
+      "description": "永雏小菲表情包",
+      "url": "https://pic.696898.xyz/pic?type=永雏小菲",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "liuying": {
+      "group": "表情包",
+      "description": "流萤表情包",
+      "url": "https://pic.696898.xyz/pic?type=流萤",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "huaji": {
+      "group": "表情包",
+      "description": "滑稽表情包",
+      "url": "https://pic.696898.xyz/pic?type=滑稽",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "gouma": {
+      "group": "表情包",
+      "description": "狗妈表情包",
+      "url": "https://pic.696898.xyz/pic?type=狗妈",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "marycat": {
+      "group": "表情包",
+      "description": "玛丽猫表情包",
+      "url": "https://pic.696898.xyz/pic?type=玛丽猫",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "seliya": {
+      "group": "表情包",
+      "description": "瑟莉亚表情包",
+      "url": "https://pic.696898.xyz/pic?type=瑟莉亚",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "nanniangwuqiku": {
+      "group": "表情包",
+      "description": "男娘武器库",
+      "url": "https://pic.696898.xyz/pic?type=男娘武器库",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "jixuanyou": {
+      "group": "表情包",
+      "description": "疾旋鼬表情包",
+      "url": "https://pic.696898.xyz/pic?type=疾旋鼬",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "baishengnv": {
+      "group": "表情包",
+      "description": "白圣女表情包",
+      "url": "https://pic.696898.xyz/pic?type=白圣女",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "baishengnvheibai": {
+      "group": "表情包",
+      "description": "白圣女黑白表情包",
+      "url": "https://pic.696898.xyz/pic?type=白圣女黑白",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "xushanzhenxun": {
+      "group": "表情包",
+      "description": "绪山真寻表情包",
+      "url": "https://pic.696898.xyz/pic?type=绪山真寻",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "fujitakotone": {
+      "group": "表情包",
+      "description": "藤田琴音表情包",
+      "url": "https://pic.696898.xyz/pic?type=藤田琴音",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "mizhi": {
+      "group": "表情包",
+      "description": "蜜汁工坊表情包",
+      "url": "https://pic.696898.xyz/pic?type=蜜汁工坊",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "baiquannvzhu": {
+      "group": "表情包",
+      "description": "败犬女主表情包",
+      "url": "https://pic.696898.xyz/pic?type=败犬女主",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "umamusume": {
+      "group": "表情包",
+      "description": "赛马娘表情包",
+      "url": "https://pic.696898.xyz/pic?type=赛马娘",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "lunazi": {
+      "group": "表情包",
+      "description": "鹿乃子表情包",
+      "url": "https://pic.696898.xyz/pic?type=鹿乃子",
+      "method": "redirect",
+      "queryParams": []
+    },
+    "longtu": {
+      "group": "表情包",
+      "description": "龙图表情包",
+      "url": "https://pic.696898.xyz/pic?type=龙图",
       "method": "redirect",
       "queryParams": []
     }
