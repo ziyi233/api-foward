@@ -451,6 +451,68 @@ app.get('/', (req, res) => {
         }
         groupedApis[group].push({ key, ...entry });
     }
+    
+    // 为 LLM 提示词准备数据
+    const baseURL = `${req.protocol}://${req.get('host')}`;
+    const pathFunctions = [];
+    
+    // 按组排序的顺序
+    const groupOrder = {'AI绘图': 1, '二次元图片': 2, '三次元图片': 3, '表情包': 4, '未分组': 99};
+    
+    // 准备所有 API 配置
+    const allApis = [];
+    for (const key in currentConfig.apiUrls) {
+        allApis.push({ key, ...currentConfig.apiUrls[key] });
+    }
+    
+    // 按组和名称排序
+    allApis.sort((a, b) => {
+        const orderA = groupOrder[a.group || '未分组'] || 50;
+        const orderB = groupOrder[b.group || '未分组'] || 50;
+        return orderA - orderB || a.key.localeCompare(b.key);
+    });
+    
+    // 生成路径功能描述
+    allApis.forEach(entry => {
+        const key = entry.key;
+        const group = entry.group || '未分组';
+        const description = entry.description || group;
+        
+        // 格式化路径描述
+        let pathDesc = '';
+        
+        // AI绘图类型需要特殊处理tags参数
+        if (group === 'AI绘图') {
+            pathDesc = `${description}:/${key}?tags=<tags>`;
+        } 
+        // 其他类型直接使用路径
+        else {
+            pathDesc = `${description}:/${key}`;
+        }
+        
+        pathFunctions.push(pathDesc);
+    });
+    
+    // 生成完整提示词
+    const llmPrompt = `picture_url{{
+
+根据用户请求，选择合适的图片API路径，生成并返回完整URL。仅输出最终URL，不要添加其他文字。
+
+基础URL：${baseURL}
+
+可用路径（不要修改路径格式）：
+${pathFunctions.map(path => `- ${path}`).join('\n')}
+
+特殊说明：
+1. AI绘图路径(/flux, /turbo)需要tags参数
+2. 生成tags时，将用户描述转化为50个左右的关键词，用英文逗号分隔
+3. 所有参数必须进行URL编码
+4. 严禁生成色情内容
+
+示例：如果用户请求“给我一张山水画”，应返回：${baseURL}/flux?tags=mountains%2Cwater%2Clandscape%2Ctraditional%2Cchinese%2Cpainting%2Cscenery
+
+}}`;
+    
 
     // Sort groups
     const sortedGroups = Object.keys(groupedApis).sort((a, b) => {
@@ -541,6 +603,20 @@ app.get('/', (req, res) => {
              <a href="/admin" class="btn btn-primary btn-lg" role="button"><i class="bi bi-gear-fill"></i> 前往管理页面</a>
           </div>
         </div>
+        
+        <!-- LLM 提示词生成卡片 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="h5 mb-0">LLM 提示词</h2>
+                <button id="copy-prompt-btn" class="btn btn-sm btn-outline-primary"><i class="bi bi-clipboard"></i> 复制</button>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-2">
+                    <small><i class="bi bi-info-circle"></i> 以下是自动生成的 LLM 提示词，可用于向 AI 助手请求图片。复制后直接粘贴到对话中，然后用自然语言描述你想要的图片。</small>
+                </div>
+                <pre id="llm-prompt" class="bg-light p-3 rounded" style="white-space: pre-wrap; word-break: break-word; font-size: 0.875rem;">${llmPrompt}</pre>
+            </div>
+        </div>
 
         <div class="card mb-4">
             <div class="card-header"><h2 class="h5 mb-0">可用 API 端点</h2></div>
@@ -580,6 +656,37 @@ app.get('/', (req, res) => {
     <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/popper.js/2.11.2/umd/popper.min.js"></script>
     <!-- Bootstrap 5 JS -->
     <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/js/bootstrap.min.js"></script>
+    
+    <!-- 复制按钮脚本 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const promptElement = document.getElementById('llm-prompt');
+            const copyButton = document.getElementById('copy-prompt-btn');
+            
+            if (promptElement && copyButton) {
+                // 复制按钮功能
+                copyButton.addEventListener('click', () => {
+                    const textToCopy = promptElement.textContent;
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        // 显示复制成功提示
+                        const originalText = copyButton.innerHTML;
+                        copyButton.innerHTML = '<i class="bi bi-check"></i> 已复制';
+                        copyButton.classList.remove('btn-outline-primary');
+                        copyButton.classList.add('btn-success');
+                        
+                        setTimeout(() => {
+                            copyButton.innerHTML = originalText;
+                            copyButton.classList.remove('btn-success');
+                            copyButton.classList.add('btn-outline-primary');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('复制失败:', err);
+                        alert('复制失败，请手动复制');
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
 `;
