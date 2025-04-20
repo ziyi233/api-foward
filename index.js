@@ -1446,22 +1446,15 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                          <i class="bi bi-folder-symlink"></i> 移动
                      </button>
                  </div>
-            </div>
+             </div>
         </div>
 
-        <form id="config-form">
-            <div id="api-configs-container">
-                <!-- Initial Loading Indicator -->
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">正在加载配置...</span>
-                    </div>
-                    <p class="mt-2">正在加载配置...</p>
-                </div>
+        <!-- Global Settings Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">全局设置</h2>
             </div>
-
-            <!-- Global settings will be injected into the correct group by JS -->
-            <div id="global-settings-placeholder" style="display: none;">
+            <div class="card-body">
                  <div class="row mb-3 align-items-center global-setting-item">
                      <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">全局基础 Tag:</label>
                      <div class="col-sm-8">
@@ -1472,10 +1465,24 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                      </div>
                  </div>
             </div>
+        </div>
+
+        <form id="config-form">
+            <div id="api-configs-container">
+                <!-- Initial Loading Indicator -->
+                 <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">正在加载配置...</span>
+                    </div>
+                    <p class="mt-2">正在加载配置...</p>
+                </div>
+            </div>
+
+            <!-- Global settings placeholder removed -->
 
 
             <button type="submit" class="btn btn-primary w-100 btn-lg save-button mt-4">
-                <i class="bi bi-save"></i> 保存所有配置
+                 <i class="bi bi-save"></i> 保存所有配置
             </button>
         </form>
         <div id="message" class="alert mt-4" role="alert" style="display: none;"></div>
@@ -1487,9 +1494,8 @@ app.get('/admin', checkAdminAuth, (req, res) => {
     <script>
         const form = document.getElementById('config-form');
         const apiConfigsContainer = document.getElementById('api-configs-container');
-        // Get baseTag input from placeholder initially
-        const globalSettingsPlaceholder = document.getElementById('global-settings-placeholder');
-        const baseTagInput = globalSettingsPlaceholder.querySelector('#baseTag');
+        // Get baseTag input from its new location
+        const baseTagInput = document.getElementById('baseTag'); // Directly get the input now
         const messageDiv = document.getElementById('message');
         let currentConfigData = { apiUrls: {}, baseTag: "" };
         let bootstrapTooltipList = [];
@@ -1745,14 +1751,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                     \`;
                     groupContainer.appendChild(groupTitle); // Add title with checkbox to group container
 
-                    // Inject Global Settings into AI Group
-                    if (groupName === 'AI绘图') {
-                         const globalSettingElement = globalSettingsPlaceholder.querySelector('.global-setting-item').cloneNode(true);
-                         groupContainer.appendChild(globalSettingElement);
-                    }
+                    // Removed logic to inject global settings into AI group
 
                     // Sort and render endpoints within the group
-                    groupedEndpoints[groupName].sort((a, b) => a.key.localeCompare(b.key));
+                     groupedEndpoints[groupName].sort((a, b) => a.key.localeCompare(b.key));
                     groupedEndpoints[groupName].forEach(item => {
                         const cardElement = renderApiEndpoint(item.key, item.config);
                         groupContainer.appendChild(cardElement); // Add card to group container
@@ -1762,13 +1764,13 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                 });
             }
 
-            // Ensure baseTagInput refers to the one potentially moved into the DOM
-            const finalBaseTagInput = document.getElementById('baseTag');
-            if (finalBaseTagInput) {
-                 finalBaseTagInput.value = currentConfigData.baseTag || '';
+            // Set the value for the globally placed baseTag input
+            if (baseTagInput) {
+                 baseTagInput.value = currentConfigData.baseTag || '';
             } else {
-                 console.error("BaseTag input element not found after rendering!");
+                 console.error("BaseTag input element not found in its new location!");
             }
+
 
             setTimeout(() => initializeTooltips(document.body), 100);
         }
@@ -2114,10 +2116,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                  // Simplified collection - just get the basics needed for re-render
                  updatedApiUrls[apiKey] = configEntry;
              });
-             const currentBaseTagInput = document.getElementById('baseTag');
+             // Get baseTag value from its global location
              return {
                  apiUrls: updatedApiUrls,
-                 baseTag: currentBaseTagInput ? currentBaseTagInput.value.trim() : ''
+                 baseTag: baseTagInput ? baseTagInput.value.trim() : ''
              };
         }
 
@@ -2215,11 +2217,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 
             if (hasError) { console.error("Validation errors found. Aborting save."); return; }
 
-            // Find the potentially moved baseTag input
-            const currentBaseTagInput = document.getElementById('baseTag');
+            // Get baseTag value from its global location
             const updatedConfig = {
                 apiUrls: updatedApiUrls,
-                baseTag: currentBaseTagInput ? currentBaseTagInput.value.trim() : '' // Get value from current location
+                baseTag: baseTagInput ? baseTagInput.value.trim() : ''
             };
             console.log("Saving config:", JSON.stringify(updatedConfig, null, 2));
 
