@@ -1452,11 +1452,11 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         <!-- Global Settings Card -->
         <div class="card mb-4">
             <div class="card-header">
-                <h2 class="h5 mb-0">全局设置</h2>
+                <h2 class="h5 mb-0">AI绘图 基础tag</h2>
             </div>
             <div class="card-body">
                  <div class="row mb-3 align-items-center global-setting-item">
-                     <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">全局基础 Tag:</label>
+                     <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">AI基础 Tag:</label>
                      <div class="col-sm-8">
                          <input type="text" class="form-control" id="baseTag" name="baseTag" placeholder="例如: masterpiece%20best%20quality">
                      </div>
