@@ -493,25 +493,19 @@ app.get('/', (req, res) => {
         pathFunctions.push(pathDesc);
     });
     
-    // 生成完整提示词
-    const llmPrompt = `picture_url{{
-
-根据用户请求，选择合适的图片API路径，生成并返回完整URL。仅输出最终URL，不要添加其他文字。
-
-基础URL：${baseURL}
-
-可用路径（不要修改路径格式）：
-${pathFunctions.map(path => `- ${path}`).join('\n')}
-
-特殊说明：
-1. AI绘图路径(/flux, /turbo)需要tags参数
-2. 生成tags时，将用户描述转化为50个左右的关键词，用英文逗号分隔
-3. 所有参数必须进行URL编码
-4. 严禁生成色情内容
-
-示例：如果用户请求“给我一张山水画”，应返回：${baseURL}/flux?tags=mountains%2Cwater%2Clandscape%2Ctraditional%2Cchinese%2Cpainting%2Cscenery
-
-}}`;
+    // 生成完整提示词，适合嵌入到 YAML 文件中，每行都有缩进
+    const llmPrompt = `    picture_url: |
+    {{ 
+    根据用户请求，选择合适的图片API路径，生成并返回完整URL。仅输出最终URL，不要添加其他文字。
+    基础URL：${baseURL}
+    可用路径（不要修改路径格式）：
+${pathFunctions.map(path => `    - ${path}`).join('\n')}
+    特殊说明：
+    1. AI绘图路径(/flux, /turbo)需要tags参数
+    2. 生成tags时，将用户描述转化为50个左右的关键词，用英文逗号分隔
+    3. 所有参数必须进行URL编码
+    4. 严禁生成色情内容
+    示例：如果用户请求“给我一张山水画”，应返回：${baseURL}/flux?tags=mountains%2Cwater%2Clandscape%2Ctraditional%2Cchinese%2Cpainting%2Cscenery}}`;
     
 
     // Sort groups
@@ -802,7 +796,7 @@ ${pathFunctions.map(path => `- ${path}`).join('\n')}
             </div>
             <div class="card-body">
                 <div class="alert alert-info mb-2">
-                    <small><i class="bi bi-info-circle"></i> 以下是自动生成的 LLM 提示词，可用于向 AI 助手请求图片。复制后直接粘贴到对话中，然后用自然语言描述你想要的图片。</small>
+                    <small><i class="bi bi-info-circle"></i> 以下是自动生成的 LLM 提示词，适合嵌入到 YAML 文件中。每行都有适当的缩进，复制后可直接粘贴到配置文件中。</small>
                 </div>
                 <pre id="llm-prompt" class="bg-light p-3 rounded" style="white-space: pre-wrap; word-break: break-word; font-size: 0.875rem;">${llmPrompt}</pre>
             </div>
