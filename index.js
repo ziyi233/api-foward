@@ -578,14 +578,206 @@ ${pathFunctions.map(path => `    - ${path}`).join('\n')}
     <!-- 新 Bootstrap5 核心 CSS 文件 -->
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
     <!-- Optional: Bootstrap Icons CDN (using cdnjs) -->
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <!-- Pinyin Library for Emoticon Fetching (using unpkg) -->
+    <script src="https://unpkg.com/pinyin-pro@3.26.0/dist/index.js"></script> 
     <style>
-        body { padding-top: 1.5rem; padding-bottom: 3rem; background-color: #f8f9fa; }
+        /* v0 Style Adjustments */
+        :root {
+            --v0-background: #ffffff; /* White background */
+            --v0-foreground: #111827; /* Darker gray text (Tailwind gray-900) */
+            --v0-muted: #f9fafb; /* Lighter gray for muted backgrounds (Tailwind gray-50) */
+            --v0-muted-foreground: #6b7280; /* Medium gray for muted text (Tailwind gray-500) */
+            --v0-border: #e5e7eb; /* Light gray border (Tailwind gray-200) */
+            --v0-input: #d1d5db; /* Input border (Tailwind gray-300) */
+            --v0-primary: #111827; /* Primary color (button bg) - Dark gray */
+            --v0-primary-foreground: #ffffff; /* Text on primary button - White */
+            --v0-secondary: #f3f4f6; /* Secondary button bg (Tailwind gray-100) */
+            --v0-secondary-foreground: #1f2937; /* Text on secondary button (Tailwind gray-800) */
+            --v0-card: #ffffff; /* Card background */
+            --v0-card-foreground: #111827; /* Card text */
+            --v0-radius: 0.5rem; /* Default border radius */
+            --v0-radius-lg: 0.75rem; /* Larger radius */
+            --v0-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Subtle shadow */
+        }
+        body { 
+            padding-top: 2rem; 
+            padding-bottom: 4rem; 
+            background-color: var(--v0-muted); /* Use muted for page background */
+            color: var(--v0-foreground);
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default font stack */
+        }
         .container { max-width: 1140px; }
-        .card img { max-height: 250px; object-fit: contain; }
-        .table td, .table th { vertical-align: middle; }
-        code { font-size: 0.875em; }
+        
+        /* Card Styles */
+        .card { 
+            background-color: var(--v0-card);
+            color: var(--v0-card-foreground);
+            border: 1px solid var(--v0-border); 
+            border-radius: var(--v0-radius-lg); /* Larger radius */
+            box-shadow: var(--v0-shadow); /* Use shadow variable */
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: var(--v0-card); 
+            border-bottom: 1px solid var(--v0-border);
+            padding: 1rem 1.5rem; /* Increased padding */
+            font-weight: 600; /* Bolder header */
+            border-radius: var(--v0-radius-lg) var(--v0-radius-lg) 0 0; /* Match card radius */
+        }
+        .card-body { padding: 1.5rem; }
+        .card-footer { 
+            background-color: var(--v0-muted); 
+            border-top: 1px solid var(--v0-border);
+            color: var(--v0-muted-foreground);
+            padding: 0.75rem 1.5rem; /* Match header padding */
+            border-radius: 0 0 var(--v0-radius-lg) var(--v0-radius-lg); /* Match card radius */
+        }
+        .card img { 
+            max-height: 180px; /* Slightly smaller max height */
+            object-fit: contain; 
+            border-radius: calc(var(--v0-radius-lg) - 1px) calc(var(--v0-radius-lg) - 1px) 0 0; /* Match card radius */
+        }
+        
+        /* Button Styles */
+        .btn {
+             border-radius: var(--v0-radius);
+             padding: 0.5rem 1rem; /* Slightly smaller padding */
+             font-size: 0.875rem; /* Smaller font size */
+             font-weight: 500;
+             transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+             border: 1px solid transparent; /* Ensure border exists for consistent sizing */
+             line-height: 1.25rem; /* Ensure consistent height */
+        }
+        .btn:focus-visible { /* Modern focus ring */
+             outline: 2px solid transparent;
+             outline-offset: 2px;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .btn-primary {
+            background-color: var(--v0-primary);
+            border-color: var(--v0-primary);
+            color: var(--v0-primary-foreground);
+        }
+        .btn-primary:hover {
+            background-color: #374151; /* Tailwind gray-700 */
+            border-color: #374151;
+            color: var(--v0-primary-foreground);
+        }
+        .btn-outline-primary {
+             color: var(--v0-primary);
+             border-color: var(--v0-input); /* Use input border color */
+             background-color: var(--v0-background);
+        }
+         .btn-outline-primary:hover {
+             background-color: var(--v0-secondary);
+             color: var(--v0-secondary-foreground);
+             border-color: var(--v0-input);
+         }
+         .btn-success { /* For copy button success state */
+             background-color: #22c55e; /* Tailwind green-500 */
+             border-color: #22c55e;
+             color: #ffffff;
+         }
+         .btn-success:hover {
+             background-color: #16a34a; /* Tailwind green-600 */
+             border-color: #16a34a;
+             color: #ffffff;
+         }
+        .btn-lg { padding: 0.75rem 1.5rem; font-size: 1rem; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: calc(var(--v0-radius) - 0.125rem); }
+
+        /* Table Styles */
+        .table { 
+            border-color: var(--v0-border); 
+            margin-bottom: 0; 
+        }
+        .table th, .table td { 
+            vertical-align: middle; 
+            padding: 0.75rem 1rem; /* Adjusted padding */
+            border-top: 1px solid var(--v0-border);
+            font-size: 0.875rem; /* Smaller font */
+            line-height: 1.25rem;
+        }
+        .table thead th {
+            border-bottom: 1px solid var(--v0-border); /* Standard border */
+            background-color: var(--v0-muted); 
+            color: var(--v0-muted-foreground); /* Muted text for header */
+            font-weight: 500;
+            text-transform: uppercase; /* Uppercase headers */
+            letter-spacing: 0.05em; /* Slight letter spacing */
+            font-size: 0.75rem; /* Smaller header font */
+        }
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+             background-color: var(--v0-muted); /* Use muted for striping */
+             color: var(--v0-foreground);
+        }
+        .table-hover > tbody > tr:hover > * {
+             background-color: #f3f4f6; /* Tailwind gray-100 */
+             color: var(--v0-foreground);
+        }
+        .table-bordered { border: 1px solid var(--v0-border); }
+        .table-bordered th, .table-bordered td { border: 1px solid var(--v0-border); }
+        .table-responsive { margin-bottom: 1rem; border: 1px solid var(--v0-border); border-radius: var(--v0-radius); overflow: hidden; } /* Add border/radius to responsive container */
+
+        /* Code & Pre Styles */
+        code { 
+            font-size: 0.875em; 
+            color: var(--v0-foreground); 
+            background-color: var(--v0-secondary); /* Use secondary bg */
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem; /* Slightly smaller radius */
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* Monospace font */
+        }
+        pre {
+            background-color: var(--v0-secondary); /* Use secondary bg */
+            border: 1px solid var(--v0-border);
+            border-radius: var(--v0-radius);
+            padding: 1rem;
+            color: var(--v0-foreground);
+            white-space: pre-wrap; 
+            word-break: break-word; 
+            font-size: 0.875rem;
+            line-height: 1.5;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* Monospace font */
+        }
+        
+        /* Alert Styles */
+        .alert {
+             border-radius: var(--v0-radius);
+             border: 1px solid transparent;
+             padding: 0.75rem 1rem; /* Adjusted padding */
+             font-size: 0.875rem;
+        }
+        .alert-info {
+             color: #0c5460; /* Keep original colors for now */
+             background-color: #d1ecf1;
+             border-color: #bee5eb;
+        }
+        .alert-info .bi { 
+             margin-right: 0.5rem;
+             vertical-align: text-bottom; /* Align icon better */
+        }
+
+        /* Other Styles */
+        .p-5 { padding: 3rem !important; } /* Increased padding */
+        .py-5 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+        .mb-4 { margin-bottom: 1.5rem !important; }
+        .mt-4 { margin-top: 1.5rem !important; }
+        .mt-3 { margin-top: 1rem !important; }
+        .mt-2 { margin-top: 0.5rem !important; }
+        .bg-light { background-color: var(--v0-card) !important; border: 1px solid var(--v0-border); } /* Use card bg and add border */
+        .rounded-3 { border-radius: var(--v0-radius-lg) !important; } /* Use large radius */
+        .text-muted { color: var(--v0-muted-foreground) !important; }
+        .fw-bold { font-weight: 600 !important; } 
+        .display-5 { font-size: 2.25rem; font-weight: 700; } /* Slightly smaller, bolder */
+        .fs-4 { font-size: 1.125rem; line-height: 1.75rem; } /* Adjusted size and line height */
+        h1, h2, h3, h5 { font-weight: 600; color: var(--v0-foreground); }
+        h2.h5 { font-size: 1rem; font-weight: 600; } /* Adjust size for card headers */
         hr.my-1 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; opacity: 0.1;}
+        .badge { border-radius: 0.375rem; padding: 0.25em 0.6em; font-weight: 500; font-size: 0.75rem; } /* Smaller badge */
+        .bg-primary { background-color: var(--v0-primary) !important; color: var(--v0-primary-foreground); }
+        .bg-secondary { background-color: var(--v0-secondary) !important; color: var(--v0-secondary-foreground); }
     </style>
 </head>
 <body>
@@ -720,30 +912,123 @@ app.get('/admin-login', (req, res) => {
     <title>API 转发管理登录</title>
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
     <style>
+        /* v0 Style Adjustments */
+        :root {
+            --v0-background: #ffffff; /* White background */
+            --v0-foreground: #09090b; /* Near black text */
+            --v0-muted: #f9fafb; /* Lighter gray (Tailwind gray-50) */
+            --v0-muted-foreground: #6b7280; /* Medium gray (Tailwind gray-500) */
+            --v0-border: #e5e7eb; /* Light gray border (Tailwind gray-200) */
+            --v0-input: #d1d5db; /* Input border (Tailwind gray-300) */
+            --v0-primary: #111827; /* Dark gray (Tailwind gray-900) */
+            --v0-primary-foreground: #ffffff; /* White */
+            --v0-destructive: #ef4444; /* Red (Tailwind red-500) */
+            --v0-destructive-foreground: #ffffff; /* White */
+            --v0-card: #ffffff; /* Card background */
+            --v0-card-foreground: #111827; /* Card text */
+            --v0-radius: 0.5rem; /* Default border radius */
+            --v0-radius-lg: 0.75rem; /* Larger radius */
+            --v0-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Subtle shadow */
+        }
         body { 
-            background-color: #f8f9fa; 
+            background-color: var(--v0-muted); 
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default font stack */
+            color: var(--v0-foreground);
         }
         .login-container {
             max-width: 400px;
             width: 100%;
-            padding: 2rem;
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            padding: 2.5rem; 
+            background-color: var(--v0-card);
+            border-radius: var(--v0-radius-lg); /* Larger radius */
+            border: 1px solid var(--v0-border);
+            box-shadow: var(--v0-shadow); /* Use shadow variable */
         }
         .login-header {
             text-align: center;
             margin-bottom: 2rem;
         }
-        .error-message {
-            color: #dc3545;
-            margin-bottom: 1rem;
-            display: none;
+        .login-header h2 {
+            font-size: 1.5rem; /* Slightly smaller heading */
+            font-weight: 600;
+            color: var(--v0-foreground);
+            margin-bottom: 0.5rem;
         }
+        .login-header p {
+            color: var(--v0-muted-foreground);
+            font-size: 0.875rem; /* Smaller text */
+        }
+        .error-message {
+            color: var(--v0-destructive); 
+            background-color: #fef2f2; /* Tailwind red-50 */
+            border: 1px solid #fca5a5; /* Tailwind red-300 */
+            border-radius: var(--v0-radius); /* Standard radius */
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            display: none; 
+        }
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--v0-foreground);
+        }
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem; /* Adjusted padding */
+            font-size: 0.875rem; /* Smaller font */
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            background-clip: padding-box;
+            border: 1px solid var(--v0-input);
+            appearance: none;
+            border-radius: var(--v0-radius);
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        .form-control:focus {
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            border-color: var(--v0-primary); 
+            outline: 0;
+            box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary); /* Modern focus ring */
+        }
+        .btn {
+             border-radius: var(--v0-radius);
+             padding: 0.5rem 1rem; /* Adjusted padding */
+             font-size: 0.875rem; /* Smaller font */
+             font-weight: 500;
+             transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+             display: inline-flex; 
+             align-items: center;
+             justify-content: center;
+             line-height: 1.25rem; /* Consistent height */
+             border: 1px solid transparent;
+        }
+         .btn:focus-visible { /* Modern focus ring */
+             outline: 2px solid transparent;
+             outline-offset: 2px;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .btn-primary {
+            background-color: var(--v0-primary);
+            border-color: var(--v0-primary);
+            color: var(--v0-primary-foreground);
+        }
+        .btn-primary:hover {
+            background-color: #374151; /* Tailwind gray-700 */
+            border-color: #374151;
+            color: var(--v0-primary-foreground);
+        }
+        .w-100 { width: 100% !important; }
+        .mb-3 { margin-bottom: 1rem !important; } /* Reduced margin */
     </style>
 </head>
 <body>
@@ -834,55 +1119,344 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API 转发配置管理 (Bootstrap)</title>
+    <title>API 转发配置管理</title>
     <!-- 新 Bootstrap5 核心 CSS 文件 -->
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
     <!-- Optional: Bootstrap Icons CDN (using cdnjs) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <!-- Pinyin Library for Emoticon Fetching (using unpkg) -->
+    <script src="https://unpkg.com/pinyin-pro@3.26.0/dist/index.js"></script>
     <style>
-        body { background-color: #f8f9fa; padding-top: 1.5rem; padding-bottom: 3rem; }
+        /* v0 Style Adjustments */
+        :root {
+            --v0-background: #ffffff; /* White background */
+            --v0-foreground: #09090b; /* Near black text */
+            --v0-muted: #f9fafb; /* Lighter gray (Tailwind gray-50) */
+            --v0-muted-foreground: #6b7280; /* Medium gray (Tailwind gray-500) */
+            --v0-border: #e5e7eb; /* Light gray border (Tailwind gray-200) */
+            --v0-input: #d1d5db; /* Input border (Tailwind gray-300) */
+            --v0-primary: #111827; /* Dark gray (Tailwind gray-900) */
+            --v0-primary-foreground: #ffffff; /* White */
+            --v0-secondary: #f3f4f6; /* Secondary button bg (Tailwind gray-100) */
+            --v0-secondary-foreground: #1f2937; /* Text on secondary button (Tailwind gray-800) */
+            --v0-destructive: #ef4444; /* Red (Tailwind red-500) */
+            --v0-destructive-foreground: #ffffff; /* White */
+            --v0-success: #22c55e; /* Green (Tailwind green-500) */
+            --v0-success-foreground: #ffffff; /* White */
+            --v0-card: #ffffff; /* Card background */
+            --v0-card-foreground: #111827; /* Card text */
+            --v0-radius: 0.5rem; /* Default border radius */
+            --v0-radius-sm: 0.375rem; /* Smaller radius */
+            --v0-radius-lg: 0.75rem; /* Larger radius */
+            --v0-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Subtle shadow */
+        }
+        body { 
+            background-color: var(--v0-muted); 
+            padding-top: 2rem; 
+            padding-bottom: 4rem; 
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default font stack */
+            color: var(--v0-foreground);
+        }
         .container { max-width: 960px; }
-        .card { margin-bottom: 1.5rem; }
-        .card-header { background-color: rgba(0, 123, 255, 0.05); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .api-key-input { font-weight: bold; border: none; border-bottom: 1px dashed #0d6efd; padding: 2px 5px; background: transparent; color: #0d6efd; margin-left: 0.25rem; width: auto; max-width: 250px; }
-        .api-key-input:focus { outline: none; border-bottom-style: solid; }
-        .config-item { margin-bottom: 1rem; }
-        .config-item label { font-weight: 500; color: #495057; }
-        .proxy-settings, .query-params { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
-        .param-item { border: 1px solid #e9ecef; padding: 1rem; margin-bottom: 1rem; border-radius: 0.375rem; background-color: #fff; position: relative; }
-        .param-item .remove-param-button { position: absolute; top: 0.5rem; right: 0.5rem; }
-        .tooltip-icon { cursor: help; color: #6c757d; margin-left: 0.25rem; }
-        #message { margin-top: 1.5rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
-        .add-endpoint-button { margin-bottom: 1.5rem; }
-        .group-title { margin-top: 2rem; margin-bottom: 1rem; font-size: 1.5rem; color: #6c757d; border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem; }
-        .global-setting-item { padding: 1rem; border: 1px solid #cfe2ff; background-color: #ecf5ff; border-radius: 0.375rem; margin-bottom: 1.5rem; }
+        
+        /* Card Styles */
+        .card { 
+            background-color: var(--v0-card);
+            color: var(--v0-card-foreground);
+            border: 1px solid var(--v0-border); 
+            border-radius: var(--v0-radius-lg); 
+            box-shadow: var(--v0-shadow); /* Use shadow variable */
+            margin-bottom: 1.5rem; 
+        }
+        .card-header { 
+            background-color: var(--v0-card); 
+            border-bottom: 1px solid var(--v0-border);
+            padding: 1rem 1.5rem; 
+            font-weight: 600; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-radius: var(--v0-radius-lg) var(--v0-radius-lg) 0 0; 
+        }
+        .card-body { padding: 1.5rem; }
+
+        /* API Key Input in Header */
+        .api-key-input { 
+            font-weight: 600; 
+            border: none; 
+            border-bottom: 1px solid var(--v0-input); /* Use input border color */
+            padding: 0.25rem 0.5rem; 
+            background: transparent; 
+            color: var(--v0-primary); 
+            margin-left: 0.5rem; 
+            width: auto; 
+            max-width: 250px; 
+            border-radius: 0; 
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            font-size: 1rem; /* Match header font size */
+        }
+        .api-key-input:focus { 
+            outline: none; 
+            border-bottom-color: var(--v0-primary); 
+            box-shadow: 0 1px 0 0 var(--v0-primary); /* Subtle bottom focus shadow */
+        }
+        
+        /* Form Elements */
+        .form-label {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--v0-foreground);
+            margin-bottom: 0.375rem; /* Adjusted margin */
+        }
+        .col-form-label { padding-top: calc(0.5rem + 1px); padding-bottom: calc(0.5rem + 1px); font-size: 0.875rem; } 
+        .form-control, .form-select {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem; 
+            font-size: 0.875rem; 
+            font-weight: 400;
+            line-height: 1.25rem; /* Consistent line height */
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            background-clip: padding-box;
+            border: 1px solid var(--v0-input);
+            appearance: none;
+            border-radius: var(--v0-radius); 
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        textarea.form-control { min-height: calc(1.25rem * 3 + 1rem + 2px); } /* Adjust based on line height */
+        .form-control:focus, .form-select:focus {
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            border-color: var(--v0-primary);
+            outline: 0;
+            box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary); /* Modern focus ring */
+        }
+        .form-control[readonly] {
+             background-color: var(--v0-muted);
+             opacity: 0.7; /* Slightly faded */
+             cursor: not-allowed;
+        }
+        .form-check-input {
+             width: 1em; /* Standard size */
+             height: 1em;
+             margin-top: 0.25em; /* Adjust alignment */
+             border-radius: 0.25em;
+             border: 1px solid var(--v0-input);
+        }
+        .form-check-input:focus {
+             border-color: var(--v0-primary);
+             outline: 0;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .form-check-input:checked {
+             background-color: var(--v0-primary);
+             border-color: var(--v0-primary);
+        }
+        .form-switch .form-check-input {
+             width: 2em; /* Standard switch width */
+             margin-left: -2.5em;
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(107, 114, 128, 0.25)'/%3e%3c/svg%3e"); /* Gray-500 at 25% opacity */
+             background-position: left center;
+             border-radius: 2em;
+             transition: background-position .15s ease-in-out;
+        }
+        .form-switch .form-check-input:focus {
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(107, 114, 128, 0.25)'/%3e%3c/svg%3e");
+        }
+        .form-switch .form-check-input:checked {
+             background-position: right center;
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e"); 
+        }
+        .form-check-label { font-size: 0.875rem; padding-left: 0.5em; } /* Add padding for switch */
+        
+        /* Buttons */
+        .btn {
+             border-radius: var(--v0-radius);
+             padding: 0.5rem 1rem; 
+             font-size: 0.875rem;
+             font-weight: 500;
+             transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, opacity 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+             display: inline-flex;
+             align-items: center;
+             justify-content: center;
+             gap: 0.375rem; /* Reduced gap */
+             line-height: 1.25rem; /* Consistent height */
+             border: 1px solid transparent;
+        }
+         .btn:focus-visible { /* Modern focus ring */
+             outline: 2px solid transparent;
+             outline-offset: 2px;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .btn-primary {
+            background-color: var(--v0-primary); border-color: var(--v0-primary); color: var(--v0-primary-foreground);
+        }
+        .btn-primary:hover { background-color: #374151; border-color: #374151; color: var(--v0-primary-foreground); } /* Tailwind gray-700 */
+        .btn-primary:disabled { background-color: var(--v0-primary); border-color: var(--v0-primary); color: var(--v0-primary-foreground); opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-success { 
+            background-color: var(--v0-success); border-color: var(--v0-success); color: var(--v0-success-foreground);
+        }
+        .btn-success:hover { background-color: #16a34a; border-color: #16a34a; } /* Tailwind green-600 */
+        
+        .btn-danger { 
+            background-color: var(--v0-destructive); border-color: var(--v0-destructive); color: var(--v0-destructive-foreground);
+        }
+        .btn-danger:hover { background-color: #dc2626; border-color: #dc2626; } /* Tailwind red-600 */
+        
+        .btn-outline-secondary { 
+             color: var(--v0-secondary-foreground);
+             border-color: var(--v0-input);
+             background-color: var(--v0-background);
+        }
+         .btn-outline-secondary:hover {
+             background-color: var(--v0-secondary);
+             border-color: var(--v0-input);
+             color: var(--v0-secondary-foreground);
+         }
+        
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: var(--v0-radius-sm); gap: 0.25rem; }
+        .btn-lg { padding: 0.625rem 1.25rem; font-size: 1rem; } /* Adjusted large button */
+        .save-button .spinner-border { width: 1em; height: 1em; border-width: .15em; } /* Thinner spinner */
+
+        /* Specific Sections */
+        .proxy-settings, .query-params { 
+            margin-top: 1.5rem; 
+            padding-top: 1.5rem; 
+            border-top: 1px solid var(--v0-border); 
+        }
+        .proxy-settings h5, .query-params h5 {
+             font-size: 0.875rem; /* Smaller heading */
+             font-weight: 600;
+             margin-bottom: 1rem;
+             color: var(--v0-foreground);
+             text-transform: uppercase; /* Uppercase subheadings */
+             letter-spacing: 0.05em;
+        }
+        .param-item { 
+            border: 1px solid var(--v0-border); 
+            padding: 1rem; 
+            margin-bottom: 1rem; 
+            border-radius: var(--v0-radius); 
+            background-color: var(--v0-muted); /* Muted background for param items */
+            position: relative; 
+        }
+        .param-item .remove-param-button { 
+            position: absolute; 
+            top: 0.5rem; 
+            right: 0.5rem; 
+            padding: 0.1rem 0.4rem; 
+            background-color: var(--v0-background); /* Ensure visibility on muted bg */
+            border-color: var(--v0-border);
+            color: var(--v0-destructive);
+        }
+         .param-item .remove-param-button:hover {
+             background-color: var(--v0-destructive);
+             border-color: var(--v0-destructive);
+             color: var(--v0-destructive-foreground);
+         }
+        .global-setting-item { 
+            padding: 1rem 1.5rem; 
+            border: 1px solid var(--v0-border); 
+            background-color: var(--v0-muted); 
+            border-radius: var(--v0-radius); 
+            margin-bottom: 1.5rem; 
+        }
+        .group-title { 
+            margin-top: 2rem; /* Reduced top margin */
+            margin-bottom: 1rem; 
+            font-size: 1.125rem; /* Adjusted group title size */
+            font-weight: 600;
+            color: var(--v0-muted-foreground); 
+            border-bottom: 1px solid var(--v0-border); 
+            padding-bottom: 0.5rem; 
+        }
+        .group-title:first-of-type { margin-top: 0; } 
+
+        /* Alert/Message Styles */
+        #message { 
+            margin-top: 1.5rem; 
+            border-radius: var(--v0-radius);
+            padding: 0.75rem 1rem; /* Adjusted padding */
+            font-size: 0.875rem;
+        }
+        .alert-success {
+             color: #0f5132; /* Tailwind green-800 */
+             background-color: #d1fae5; /* Tailwind green-100 */
+             border-color: #a7f3d0; /* Tailwind green-200 */
+        }
+        .alert-danger {
+             color: #991b1b; /* Tailwind red-800 */
+             background-color: #fee2e2; /* Tailwind red-100 */
+             border-color: #fca5a5; /* Tailwind red-300 */
+        }
+        
+        /* Tooltip */
+        .tooltip-icon { cursor: help; color: var(--v0-muted-foreground); margin-left: 0.25rem; vertical-align: middle; }
+        .tooltip-inner { background-color: var(--v0-primary); color: var(--v0-primary-foreground); font-size: 0.75rem; padding: 0.375rem 0.625rem; border-radius: var(--v0-radius-sm); box-shadow: var(--v0-shadow); }
+        .tooltip.bs-tooltip-top .tooltip-arrow::before { border-top-color: var(--v0-primary); }
+        .tooltip.bs-tooltip-bottom .tooltip-arrow::before { border-bottom-color: var(--v0-primary); }
+        .tooltip.bs-tooltip-start .tooltip-arrow::before { border-left-color: var(--v0-primary); }
+        .tooltip.bs-tooltip-end .tooltip-arrow::before { border-right-color: var(--v0-primary); }
+
+        /* Utility Overrides */
+        .mb-4 { margin-bottom: 1.5rem !important; }
+        .mt-4 { margin-top: 1.5rem !important; }
+        .text-muted { color: var(--v0-muted-foreground) !important; }
+        .text-sm-end { text-align: right !important; } 
+        .h3 { font-size: 1.25rem; font-weight: 600; } /* Smaller main heading */
+        .spinner-border { color: var(--v0-primary); }
+        .spinner-border-sm { width: 1rem; height: 1rem; border-width: 0.15em; }
     </style>
 </head>
 <body>
     <main class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-             <h1 class="h3">API 转发配置管理</h1>
-             <button type="button" class="btn btn-success add-endpoint-button" onclick="addApiEndpoint()"><i class="bi bi-plus-lg"></i> 添加新 API 端点</button>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h1 class="h3 mb-0">API 转发配置管理</h1>
+             <div class="d-flex gap-2 flex-wrap">
+                 <button type="button" class="btn btn-info fetch-emoticons-button" onclick="fetchAndAddEmoticons(this)" disabled><i class="bi bi-cloud-download"></i> 在线拉取表情包</button>
+                 <button type="button" class="btn btn-secondary" onclick="addNewGroup()"><i class="bi bi-folder-plus"></i> 添加新分组</button> <!-- Add New Group Button -->
+                 <button type="button" class="btn btn-success add-endpoint-button" onclick="addApiEndpoint()"><i class="bi bi-plus-lg"></i> 添加新 API 端点</button>
+                 <a href="/admin-logout" class="btn btn-outline-secondary"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
+             </div>
         </div>
 
-        <p class="text-muted mb-4">在这里修改、添加或删除 API 转发规则。所有更改将**立即生效**。</p>
+        <p class="text-muted mb-4">在这里修改、添加或删除 API 转发规则。点击“在线拉取表情包”可自动添加常用表情包 API。所有更改将在点击下方“保存所有配置”按钮后**立即生效**。</p>
 
-        <form id="config-form">
-            <div id="api-configs-container">
-                <!-- Initial Loading Indicator -->
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">正在加载配置...</span>
-                    </div>
-                    <p class="mt-2">正在加载配置...</p>
-                </div>
+        <!-- Batch Actions Section -->
+        <div id="batch-actions-section" class="card mb-4" style="display: none;">
+            <div class="card-body d-flex flex-wrap align-items-center gap-3">
+                 <div class="form-check">
+                     <input class="form-check-input" type="checkbox" value="" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)">
+                     <label class="form-check-label" for="select-all-checkbox">
+                         全选/取消
+                     </label>
+                 </div>
+                 <button id="batch-delete-button" type="button" class="btn btn-danger btn-sm" onclick="batchDeleteEndpoints()" disabled>
+                     <i class="bi bi-trash"></i> 批量删除 (<span id="selected-count">0</span>)
+                 </button>
+                 <div class="input-group input-group-sm" style="max-width: 300px;">
+                     <label class="input-group-text" for="batch-move-group-select">移动到分组:</label>
+                     <select class="form-select" id="batch-move-group-select" disabled>
+                         <option value="" selected disabled>选择目标分组...</option>
+                         {/* Group options will be populated by JS */}
+                     </select>
+                     <button id="batch-move-button" class="btn btn-outline-primary" type="button" onclick="batchMoveGroup()" disabled>
+                         <i class="bi bi-folder-symlink"></i> 移动
+                     </button>
+                 </div>
+             </div>
+        </div>
+
+        <!-- Global Settings Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">AI绘图 基础tag</h2>
             </div>
-
-            <!-- Global settings will be injected into the correct group by JS -->
-            <div id="global-settings-placeholder" style="display: none;">
+            <div class="card-body">
                  <div class="row mb-3 align-items-center global-setting-item">
-                     <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">全局基础 Tag:</label>
+                     <label for="baseTag" class="col-sm-3 col-form-label text-sm-end" title="用于 AI 绘图 API 的通用附加标签">AI基础 Tag:</label>
                      <div class="col-sm-8">
                          <input type="text" class="form-control" id="baseTag" name="baseTag" placeholder="例如: masterpiece%20best%20quality">
                      </div>
@@ -891,10 +1465,24 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                      </div>
                  </div>
             </div>
+        </div>
+
+        <form id="config-form">
+            <div id="api-configs-container">
+                <!-- Initial Loading Indicator -->
+                 <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">正在加载配置...</span>
+                    </div>
+                    <p class="mt-2">正在加载配置...</p>
+                </div>
+            </div>
+
+            <!-- Global settings placeholder removed -->
 
 
             <button type="submit" class="btn btn-primary w-100 btn-lg save-button mt-4">
-                <i class="bi bi-save"></i> 保存所有配置
+                 <i class="bi bi-save"></i> 保存所有配置
             </button>
         </form>
         <div id="message" class="alert mt-4" role="alert" style="display: none;"></div>
@@ -906,9 +1494,8 @@ app.get('/admin', checkAdminAuth, (req, res) => {
     <script>
         const form = document.getElementById('config-form');
         const apiConfigsContainer = document.getElementById('api-configs-container');
-        // Get baseTag input from placeholder initially
-        const globalSettingsPlaceholder = document.getElementById('global-settings-placeholder');
-        const baseTagInput = globalSettingsPlaceholder.querySelector('#baseTag');
+        // Get baseTag input from its new location
+        const baseTagInput = document.getElementById('baseTag'); // Directly get the input now
         const messageDiv = document.getElementById('message');
         let currentConfigData = { apiUrls: {}, baseTag: "" };
         let bootstrapTooltipList = [];
@@ -925,7 +1512,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         }
 
         function sanitizeApiKey(key) {
-            return key.replace(/^\\//, '').replace(/[^a-zA-Z0-9-_]/g, '_');
+            // Remove any characters that are not letters, numbers, hyphens, or underscores
+            let sanitized = key.replace(/[^a-zA-Z0-9-_]/g, ''); 
+            // Allow keys to start with numbers
+            return sanitized;
         }
 
         function initializeTooltips(container) {
@@ -956,9 +1546,12 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             card.setAttribute('data-api-key', apiKey);
 
             const cardHeader = document.createElement('div');
-            cardHeader.className = 'card-header';
+            cardHeader.className = 'card-header d-flex justify-content-between align-items-center'; // Use flexbox for alignment
             cardHeader.innerHTML = \`
-                <span>端点: /<input type="text" value="\${apiKey}" class="api-key-input" aria-label="API 端点路径" placeholder="路径名" required></span>
+                <div class="d-flex align-items-center">
+                     <input class="form-check-input me-2 endpoint-checkbox" type="checkbox" value="\${apiKey}" onchange="handleCheckboxChange()">
+                     <span>端点: /<input type="text" value="\${apiKey}" class="api-key-input" aria-label="API 端点路径" placeholder="路径名" required></span>
+                </div>
                 <button type="button" class="btn btn-danger btn-sm delete-endpoint-button" aria-label="删除此端点" onclick="removeApiEndpoint(this.closest('.card'))">
                     <i class="bi bi-trash"></i> 删除
                 </button>\`;
@@ -1086,44 +1679,82 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         }
 
         function renderConfig() {
-            disposeAllTooltips();
+            disposeAllTooltips(); // Dispose existing tooltips before clearing
             apiConfigsContainer.innerHTML = '';
+            // --- Get references to batch elements ---
+            const batchActionsSection = document.getElementById('batch-actions-section');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const batchMoveGroupSelect = document.getElementById('batch-move-group-select');
+            // --- Ensure elements exist before proceeding ---
+            if (!batchActionsSection || !selectAllCheckbox || !batchMoveGroupSelect) {
+                 console.error("Batch action elements not found in the DOM!");
+                 return; // Stop rendering if essential elements are missing
+            }
+
+            // Clear previous group options in batch move dropdown
+            batchMoveGroupSelect.innerHTML = '<option value="" selected disabled>选择目标分组...</option>';
+            // Add "未分组" option explicitly
+            batchMoveGroupSelect.add(new Option('未分组', '未分组'));
 
             const apiUrls = currentConfigData.apiUrls || {};
             const groupedEndpoints = {};
+            const allGroupNames = new Set(['未分组']); // Start with '未分组'
 
             for (const apiKey in apiUrls) {
                 const entry = apiUrls[apiKey];
                 const group = entry.group || '未分组';
+                allGroupNames.add(group); // Collect all unique group names
                 if (!groupedEndpoints[group]) { groupedEndpoints[group] = []; }
                 groupedEndpoints[group].push({ key: apiKey, config: entry });
             }
 
-            const sortedGroups = Object.keys(groupedEndpoints).sort((a, b) => {
-                 const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '未分组': 99};
+            // Populate batch move dropdown with sorted unique group names
+            const sortedAllGroupNames = Array.from(allGroupNames).sort((a, b) => {
+                 const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '696898': 6, '未分组': 99}; // Added 696898
                  return (order[a] || 99) - (order[b] || 99);
             });
+            sortedAllGroupNames.forEach(groupName => {
+                 if (groupName !== '未分组') { // Avoid adding '未分组' twice
+                     batchMoveGroupSelect.add(new Option(groupName, groupName));
+                 }
+            });
 
-            if (sortedGroups.length === 0) {
+
+            const sortedGroups = Object.keys(groupedEndpoints).sort((a, b) => {
+                 const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '696898': 6, '未分组': 99}; // Added 696898
+                 return (order[a] || 99) - (order[b] || 99);
+            });
+            
+            console.log('[Debug] Batch Actions Section Element:', batchActionsSection); // Debug Log 1
+            const numApiUrls = Object.keys(apiUrls).length;
+            console.log('[Debug] Number of API URLs:', numApiUrls); // Debug Log 2
+
+            // --- Always show batch section, buttons might be disabled if empty ---
+            console.log('[Debug] Ensuring batch actions section is visible.'); // Debug Log 3b
+            batchActionsSection.style.display = 'block'; // Always show batch actions
+
+            // --- Render groups and endpoints ---
+            if (numApiUrls === 0) {
                  apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
             } else {
-                sortedGroups.forEach(groupName => {
+                 // Clear container before rendering groups
+                 apiConfigsContainer.innerHTML = '';
+                 sortedGroups.forEach(groupName => {
                     const groupContainer = document.createElement('div'); // Container for the group
                     groupContainer.id = \`group-\${groupName.replace(/\\s+/g, '-')}\`; // Create an ID for the group container
 
                     const groupTitle = document.createElement('h2');
-                    groupTitle.className = 'group-title';
-                    groupTitle.textContent = groupName;
-                    groupContainer.appendChild(groupTitle); // Add title to group container
+                    groupTitle.className = 'group-title d-flex align-items-center'; // Use flex for alignment
+                    groupTitle.innerHTML = \`
+                         <input type="checkbox" class="form-check-input me-2 group-select-all-checkbox" onchange="toggleSelectGroup(this, '\${groupName}')" aria-label="全选/取消全选 \${groupName} 分组">
+                         \${groupName}
+                    \`;
+                    groupContainer.appendChild(groupTitle); // Add title with checkbox to group container
 
-                    // Inject Global Settings into AI Group
-                    if (groupName === 'AI绘图') {
-                         const globalSettingElement = globalSettingsPlaceholder.querySelector('.global-setting-item').cloneNode(true);
-                         groupContainer.appendChild(globalSettingElement);
-                    }
+                    // Removed logic to inject global settings into AI group
 
                     // Sort and render endpoints within the group
-                    groupedEndpoints[groupName].sort((a, b) => a.key.localeCompare(b.key));
+                     groupedEndpoints[groupName].sort((a, b) => a.key.localeCompare(b.key));
                     groupedEndpoints[groupName].forEach(item => {
                         const cardElement = renderApiEndpoint(item.key, item.config);
                         groupContainer.appendChild(cardElement); // Add card to group container
@@ -1133,13 +1764,13 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                 });
             }
 
-            // Ensure baseTagInput refers to the one potentially moved into the DOM
-            const finalBaseTagInput = document.getElementById('baseTag');
-            if (finalBaseTagInput) {
-                 finalBaseTagInput.value = currentConfigData.baseTag || '';
+            // Set the value for the globally placed baseTag input
+            if (baseTagInput) {
+                 baseTagInput.value = currentConfigData.baseTag || '';
             } else {
-                 console.error("BaseTag input element not found after rendering!");
+                 console.error("BaseTag input element not found in its new location!");
             }
+
 
             setTimeout(() => initializeTooltips(document.body), 100);
         }
@@ -1233,8 +1864,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             if (confirm(\`确定要删除端点 "\${keyToRemove}" 吗？此操作将在保存后生效且无法撤销。\`)) {
                 const parentGroupContainer = card.parentElement;
                 card.remove();
+                handleCheckboxChange(); // Update batch counts after removing
                  if (!apiConfigsContainer.querySelector('.card')) {
                      apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
+                     document.getElementById('batch-actions-section').style.display = 'none'; // Hide batch actions
                  } else if (parentGroupContainer && !parentGroupContainer.querySelector('.card')) {
                       const groupTitle = parentGroupContainer.previousElementSibling;
                       if (groupTitle && groupTitle.classList.contains('group-title')) {
@@ -1246,14 +1879,261 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             }
         }
 
+        // --- Batch Action Functions ---
+
+        function getSelectedApiKeys() {
+            return Array.from(apiConfigsContainer.querySelectorAll('.endpoint-checkbox:checked')).map(cb => cb.value);
+        }
+
+        function updateBatchActionButtonsState() {
+            const selectedKeys = getSelectedApiKeys();
+            const count = selectedKeys.length;
+            const batchDeleteButton = document.getElementById('batch-delete-button');
+            const batchMoveButton = document.getElementById('batch-move-button');
+            const batchMoveGroupSelect = document.getElementById('batch-move-group-select');
+            const selectedCountSpan = document.getElementById('selected-count');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const allCheckboxes = apiConfigsContainer.querySelectorAll('.endpoint-checkbox');
+
+            selectedCountSpan.textContent = count;
+            batchDeleteButton.disabled = count === 0;
+            batchMoveButton.disabled = count === 0 || !batchMoveGroupSelect.value;
+            batchMoveGroupSelect.disabled = count === 0;
+
+            // Update main select-all checkbox state
+            if (allCheckboxes.length > 0 && count === allCheckboxes.length) {
+                 selectAllCheckbox.checked = true;
+                 selectAllCheckbox.indeterminate = false;
+            } else if (count > 0) {
+                 selectAllCheckbox.checked = false;
+                 selectAllCheckbox.indeterminate = true;
+            } else {
+                 selectAllCheckbox.checked = false;
+                 selectAllCheckbox.indeterminate = false;
+            }
+
+            // Update group select-all checkboxes
+            document.querySelectorAll('.group-select-all-checkbox').forEach(groupCb => {
+                 const groupContainer = groupCb.closest('div[id^="group-"]');
+                 if (!groupContainer) return;
+                 const groupCheckboxes = groupContainer.querySelectorAll('.endpoint-checkbox');
+                 const groupSelectedCount = groupContainer.querySelectorAll('.endpoint-checkbox:checked').length;
+
+                 if (groupCheckboxes.length > 0 && groupSelectedCount === groupCheckboxes.length) {
+                     groupCb.checked = true;
+                     groupCb.indeterminate = false;
+                 } else if (groupSelectedCount > 0) {
+                     groupCb.checked = false;
+                     groupCb.indeterminate = true;
+                 } else {
+                     groupCb.checked = false;
+                     groupCb.indeterminate = false;
+                 }
+            });
+        }
+
+        function handleCheckboxChange() {
+            updateBatchActionButtonsState();
+        }
+
+        function toggleSelectAll(checked) {
+            apiConfigsContainer.querySelectorAll('.endpoint-checkbox').forEach(cb => {
+                cb.checked = checked;
+            });
+            handleCheckboxChange();
+        }
+
+        function toggleSelectGroup(groupCheckbox, groupName) {
+             const groupContainer = document.getElementById(\`group-\${groupName.replace(/\\s+/g, '-')}\`);
+             if (groupContainer) {
+                 groupContainer.querySelectorAll('.endpoint-checkbox').forEach(cb => {
+                     cb.checked = groupCheckbox.checked;
+                 });
+             }
+             handleCheckboxChange();
+        }
+
+        function batchDeleteEndpoints() {
+            const selectedKeys = getSelectedApiKeys();
+            if (selectedKeys.length === 0) {
+                showMessage('请先选择要删除的端点。', 'error');
+                return;
+            }
+            if (confirm(\`确定要删除选中的 \${selectedKeys.length} 个端点吗？此操作将在保存后生效且无法撤销。\`)) {
+                let deletedCount = 0;
+                selectedKeys.forEach(apiKey => {
+                    const card = apiConfigsContainer.querySelector(\`.card[data-api-key="\${apiKey}"]\`);
+                    if (card) {
+                        const parentGroupContainer = card.parentElement;
+                        card.remove();
+                        deletedCount++;
+                         // Check if group is now empty
+                         if (parentGroupContainer && !parentGroupContainer.querySelector('.card')) {
+                             const groupTitle = parentGroupContainer.previousElementSibling;
+                             if (groupTitle && groupTitle.classList.contains('group-title')) {
+                                 groupTitle.remove();
+                             }
+                             parentGroupContainer.remove();
+                         }
+                    }
+                });
+                handleCheckboxChange(); // Update counts and button states
+                showMessage(\`已标记删除 \${deletedCount} 个端点。点击“保存所有配置”以确认。\`, 'success');
+                 if (!apiConfigsContainer.querySelector('.card')) {
+                     apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
+                     document.getElementById('batch-actions-section').style.display = 'none'; // Hide batch actions
+                 }
+            }
+        }
+
+        function batchMoveGroup() {
+            const selectedKeys = getSelectedApiKeys();
+            const targetGroup = document.getElementById('batch-move-group-select').value;
+
+            if (selectedKeys.length === 0) {
+                showMessage('请先选择要移动的端点。', 'error');
+                return;
+            }
+            if (!targetGroup) {
+                showMessage('请选择目标分组。', 'error');
+                return;
+            }
+
+            let movedCount = 0;
+            selectedKeys.forEach(apiKey => {
+                const card = apiConfigsContainer.querySelector(\`.card[data-api-key="\${apiKey}"]\`);
+                if (card) {
+                    const groupInput = card.querySelector(\`input[id="\${apiKey}-group"]\`);
+                    if (groupInput) {
+                        groupInput.value = targetGroup;
+                        movedCount++;
+                    }
+                }
+            });
+
+            // Re-render the entire config to reflect the group changes visually
+            // This is simpler than manually moving cards between group containers
+            showMessage(\`已将 \${movedCount} 个端点的分组更改为 "\${targetGroup}"。点击“保存所有配置”以确认。\`, 'success');
+            // Temporarily store current form data before re-rendering
+            const currentFormData = collectFormData();
+            currentConfigData.apiUrls = currentFormData.apiUrls; // Update in-memory data
+            currentConfigData.baseTag = currentFormData.baseTag;
+            renderConfig(); // Re-render based on updated in-memory data
+            // Restore checkbox states after re-render (optional, but good UX)
+            selectedKeys.forEach(apiKey => {
+                 const newCheckbox = apiConfigsContainer.querySelector(\`.endpoint-checkbox[value="\${apiKey}"]\`);
+                 if (newCheckbox) newCheckbox.checked = true;
+            });
+            handleCheckboxChange(); // Update batch counts again after re-render
+        }
+
+        function addNewGroup() {
+            const newGroupName = prompt("请输入新分组的名称:", "");
+            if (!newGroupName || !newGroupName.trim()) {
+                showMessage("分组名称不能为空。", "error");
+                return;
+            }
+            const trimmedGroupName = newGroupName.trim();
+            const groupId = \`group-\${trimmedGroupName.replace(/\\s+/g, '-')}\`;
+
+            // 检查分组是否已存在 (UI层面)
+            if (document.getElementById(groupId)) {
+                showMessage(\`分组 "\${trimmedGroupName}" 已经存在。\`, "error");
+                return;
+            }
+
+            // 创建分组标题和容器
+            const groupContainer = document.createElement('div');
+            groupContainer.id = groupId;
+
+            const groupTitle = document.createElement('h2');
+            groupTitle.className = 'group-title d-flex align-items-center';
+            groupTitle.innerHTML = \`
+                 <input type="checkbox" class="form-check-input me-2 group-select-all-checkbox" onchange="toggleSelectGroup(this, '\${trimmedGroupName}')" aria-label="全选/取消全选 \${trimmedGroupName} 分组">
+                 \${trimmedGroupName}
+            \`;
+            groupContainer.appendChild(groupTitle);
+
+            // 将新分组添加到容器末尾 (或者可以根据排序规则插入)
+            apiConfigsContainer.appendChild(groupContainer);
+
+            // 更新批量移动下拉列表
+            const batchMoveGroupSelect = document.getElementById('batch-move-group-select');
+            // 检查是否已存在该选项
+            let exists = false;
+            for (let i = 0; i < batchMoveGroupSelect.options.length; i++) {
+                if (batchMoveGroupSelect.options[i].value === trimmedGroupName) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                 batchMoveGroupSelect.add(new Option(trimmedGroupName, trimmedGroupName));
+                 // 可选：对下拉列表重新排序
+                 sortSelectOptions(batchMoveGroupSelect);
+            }
+
+
+            showMessage(\`新分组 "\${trimmedGroupName}" 已添加。您可以在此分组下添加端点，或将现有端点移动到此分组。记得保存配置。\`, 'success');
+            groupTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Helper function to sort select options (used after adding a new group)
+        function sortSelectOptions(selectElement) {
+            const options = Array.from(selectElement.options);
+            // 保留第一个 "选择目标分组..." 选项
+            const firstOption = options.shift();
+            const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '696898': 6, '未分组': 99};
+            options.sort((a, b) => {
+                 const orderA = order[a.value] || 99;
+                 const orderB = order[b.value] || 99;
+                 return orderA - orderB || a.text.localeCompare(b.text);
+            });
+            selectElement.innerHTML = ''; // 清空
+            selectElement.appendChild(firstOption); // 重新添加第一个选项
+            options.forEach(option => selectElement.appendChild(option));
+        }
+
+
+        // Helper function to collect current form data before re-rendering after move
+        function collectFormData() {
+             const updatedApiUrls = {};
+             const cards = apiConfigsContainer.querySelectorAll('.card[data-api-key]');
+             cards.forEach(card => {
+                 const apiKeyInput = card.querySelector('.api-key-input');
+                 const apiKey = sanitizeApiKey(apiKeyInput.value.trim());
+                 const originalApiKey = card.getAttribute('data-api-key');
+                 if (!apiKey) return; // Skip invalid ones for this temporary collection
+
+                 const configEntry = {
+                     group: card.querySelector(\`#\${originalApiKey}-group\`).value.trim() || '未分组',
+                     description: card.querySelector(\`#\${originalApiKey}-description\`).value.trim(),
+                     url: card.querySelector(\`#\${originalApiKey}-url\`).value.trim(),
+                     method: card.querySelector(\`#\${originalApiKey}-method\`).value,
+                     queryParams: [],
+                     proxySettings: {}
+                 };
+                 // Simplified collection - just get the basics needed for re-render
+                 updatedApiUrls[apiKey] = configEntry;
+             });
+             // Get baseTag value from its global location
+             return {
+                 apiUrls: updatedApiUrls,
+                 baseTag: baseTagInput ? baseTagInput.value.trim() : ''
+             };
+        }
+
+
         async function loadConfig() {
-            apiConfigsContainer.innerHTML = \`<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">正在加载配置...</span></div><p class="mt-2">正在加载配置...</p></div>\`;
+            apiConfigsContainer.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">正在加载配置...</span></div><p class="mt-2">正在加载配置...</p></div>'; // Changed to string concatenation
+            // The line that hid the batch section initially has been removed.
             try {
                 const response = await fetch('/config');
                 if (!response.ok) throw new Error(\`HTTP error! status: \${response.status}\`);
                 currentConfigData = await response.json();
                 if (!currentConfigData.apiUrls) currentConfigData.apiUrls = {};
                 renderConfig();
+                handleCheckboxChange(); // Initial update for batch buttons
             } catch (error) {
                 console.error('Error loading config:', error);
                 apiConfigsContainer.innerHTML = '<div class="alert alert-danger">加载配置失败。</div>';
@@ -1337,11 +2217,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 
             if (hasError) { console.error("Validation errors found. Aborting save."); return; }
 
-            // Find the potentially moved baseTag input
-            const currentBaseTagInput = document.getElementById('baseTag');
+            // Get baseTag value from its global location
             const updatedConfig = {
                 apiUrls: updatedApiUrls,
-                baseTag: currentBaseTagInput ? currentBaseTagInput.value.trim() : '' // Get value from current location
+                baseTag: baseTagInput ? baseTagInput.value.trim() : ''
             };
             console.log("Saving config:", JSON.stringify(updatedConfig, null, 2));
 
@@ -1367,7 +2246,166 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         }
 
         form.addEventListener('submit', saveConfig);
-        document.addEventListener('DOMContentLoaded', loadConfig);
+        
+        // --- New Function: Fetch and Add Emoticons ---
+        async function fetchAndAddEmoticons(button) {
+            const originalHtml = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = \`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 拉取中...\`;
+            
+            try {
+                showMessage('正在从 https://pic.696898.xyz/pic/list 拉取表情包列表...', 'info');
+                const response = await fetch('https://pic.696898.xyz/pic/list');
+                if (!response.ok) {
+                    throw new Error(\`HTTP error! status: \${response.status}\`);
+                }
+                const emoticonList = await response.json();
+                
+                if (!Array.isArray(emoticonList)) {
+                     throw new Error('返回的数据格式不是有效的 JSON 数组');
+                }
+                
+                showMessage(\`成功拉取 \${emoticonList.length} 个表情包列表，正在添加到配置中...\`, 'info');
+                
+                let addedCount = 0;
+                let pinyinFunction;
+
+                // Check for pinyin function availability
+                if (typeof pinyinPro !== 'undefined' && typeof pinyinPro.pinyin === 'function') {
+                    pinyinFunction = pinyinPro.pinyin;
+                    console.log("Using pinyin function from pinyinPro.pinyin");
+                } else {
+                    // Log detailed error information
+                    console.error('Pinyin function (pinyinPro.pinyin) not found after delay.');
+                    console.log('pinyinPro object:', pinyinPro); 
+                    if (pinyinPro) {
+                         console.log('typeof pinyinPro.pinyin:', typeof pinyinPro.pinyin);
+                    }
+                    throw new Error('pinyin-pro 库未能正确加载或初始化。请检查网络连接、浏览器控制台或稍后再试。');
+                }
+                
+                // Ensure the "696898" group container exists
+                const targetGroupName = "696898";
+                const targetGroupId = \`group-\${targetGroupName}\`;
+                let emoticonGroupContainer = apiConfigsContainer.querySelector(\`#\${targetGroupId}\`);
+                if (!emoticonGroupContainer) {
+                    const groupTitle = document.createElement('h2');
+                    groupTitle.className = 'group-title';
+                    groupTitle.textContent = targetGroupName;
+                    // Find the correct place to insert (e.g., before '未分组' or at the end)
+                    const ungroupedContainer = apiConfigsContainer.querySelector('#group-未分组');
+                    if (ungroupedContainer) {
+                        apiConfigsContainer.insertBefore(groupTitle, ungroupedContainer);
+                        emoticonGroupContainer = document.createElement('div');
+                        emoticonGroupContainer.id = targetGroupId;
+                        apiConfigsContainer.insertBefore(emoticonGroupContainer, ungroupedContainer);
+                    } else {
+                         apiConfigsContainer.appendChild(groupTitle);
+                         emoticonGroupContainer = document.createElement('div');
+                         emoticonGroupContainer.id = targetGroupId;
+                         apiConfigsContainer.appendChild(emoticonGroupContainer);
+                    }
+                }
+
+                emoticonList.forEach(item => {
+                    if (item.name && item.path) { // Basic validation
+                        let pinyinKey;
+                        try {
+                            // 尝试生成拼音首字母，保留非中文部分
+                            let pinyinInitialsRaw = pinyinFunction(item.name, { pattern: 'initial', toneType: 'none', nonZh: 'keep' }); 
+                            pinyinKey = sanitizeApiKey(pinyinInitialsRaw.toLowerCase().replace(/\s+/g, ''));
+                        } catch (e) {
+                            console.warn(\`Pinyin generation failed for "\${item.name}": \${e.message}\`);
+                            pinyinKey = null; // 标记生成失败
+                        }
+
+                        // 如果拼音生成结果为空或失败，尝试使用原始名称（清理后）
+                        if (!pinyinKey) {
+                            console.warn(\`无法为 "\${item.name}" 生成有效拼音 Key，尝试使用原名。\`);
+                            // 将空格替换为下划线，然后清理
+                            pinyinKey = sanitizeApiKey(item.name.toLowerCase().replace(/\s+/g, '_')); 
+                        }
+
+                        // 最后检查是否成功生成了 Key
+                        if (!pinyinKey) {
+                             console.warn(\`无法为 "\${item.name}" 生成任何有效 Key，跳过。\`);
+                             return; // 如果两种方法都失败，则跳过
+                        }
+                        
+                        // 检查 Key 是否仍然为空（例如，如果原名只包含无效字符）
+                        if (!pinyinKey) {
+                             console.warn(\`为 "\${item.name}" 生成的 Key 清理后为空，跳过。\`);
+                             return;
+                        }
+                        
+                        // --- 新增：检查当前配置中是否已存在该 Key ---
+                        if (currentConfigData.apiUrls[pinyinKey]) {
+                            console.log(\`端点 /\${pinyinKey} (\${item.name}) 已存在于当前配置中，跳过添加。\`);
+                            return; // 在 forEach 回调中使用 return 来跳过当前项
+                        }
+                        // --- 检查结束 ---
+
+                        const newConfigEntry = {
+                            group: targetGroupName, // Use the target group name
+                            description: \`\${item.name} 表情包\`,
+                            url: \`https://696898.xyz/pci?type=\${item.name}\`, // Use original name in URL
+                            method: "redirect",
+                            queryParams: [],
+                            proxySettings: {}
+                        };
+                        
+                        // // 不再需要检查和移除 UI 元素，因为我们基于数据进行判断
+                        // const existingCard = apiConfigsContainer.querySelector(\`.card[data-api-key="\${pinyinKey}"]\`);
+                        // if (existingCard) {
+                        //     console.log(\`端点 /\${pinyinKey} 已存在，将覆盖。\`);
+                        //     existingCard.remove();
+                        // }
+
+                        const cardElement = renderApiEndpoint(pinyinKey, newConfigEntry);
+                        emoticonGroupContainer.appendChild(cardElement); // Add card to the "表情包" group
+                        addedCount++;
+                    } else {
+                         console.warn('跳过无效的表情包条目:', item);
+                    }
+                });
+                
+                // Re-initialize tooltips for new elements
+                setTimeout(() => initializeTooltips(emoticonGroupContainer), 100); 
+                
+                showMessage(\`成功添加/更新了 \${addedCount} 个表情包 API 端点。请检查配置并点击“保存所有配置”以生效。\`, 'success');
+                
+            } catch (error) {
+                console.error('拉取或处理表情包失败:', error);
+                showMessage(\`拉取表情包失败: \${error.message}\`, 'error');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig(); // Load existing config first
+
+            // Check for pinyin library and enable button if available
+            const fetchButton = document.querySelector('.fetch-emoticons-button');
+            if (fetchButton) {
+                // Give the CDN script a moment to load, then check
+                setTimeout(() => {
+                    // Check specifically for the expected function
+                    if (typeof pinyinPro !== 'undefined' && typeof pinyinPro.pinyin === 'function') {
+                        fetchButton.disabled = false;
+                        console.log('pinyin-pro library (pinyinPro.pinyin) loaded successfully. Enabling fetch button.');
+                    } else {
+                        console.error('pinyin-pro library failed to load or initialize correctly after delay. Fetch button remains disabled.');
+                        console.log('pinyinPro object:', pinyinPro);
+                         if (pinyinPro) {
+                             console.log('typeof pinyinPro.pinyin:', typeof pinyinPro.pinyin);
+                         }
+                        showMessage('无法加载拼音库，拉取表情包功能不可用。请检查网络、浏览器控制台或刷新页面重试。', 'error');
+                    }
+                }, 1000); // 1000ms delay
+            }
+        });
     </script>
 </body>
 </html>
