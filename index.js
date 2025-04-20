@@ -1962,23 +1962,25 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                     throw new Error('pinyin-pro 库未能正确加载或初始化。请检查网络连接、浏览器控制台或稍后再试。');
                 }
                 
-                // Ensure the "表情包" group container exists
-                let emoticonGroupContainer = apiConfigsContainer.querySelector('#group-表情包');
+                // Ensure the "696898" group container exists
+                const targetGroupName = "696898";
+                const targetGroupId = \`group-\${targetGroupName}\`;
+                let emoticonGroupContainer = apiConfigsContainer.querySelector(\`#\${targetGroupId}\`);
                 if (!emoticonGroupContainer) {
                     const groupTitle = document.createElement('h2');
                     groupTitle.className = 'group-title';
-                    groupTitle.textContent = '表情包';
+                    groupTitle.textContent = targetGroupName;
                     // Find the correct place to insert (e.g., before '未分组' or at the end)
                     const ungroupedContainer = apiConfigsContainer.querySelector('#group-未分组');
                     if (ungroupedContainer) {
                         apiConfigsContainer.insertBefore(groupTitle, ungroupedContainer);
                         emoticonGroupContainer = document.createElement('div');
-                        emoticonGroupContainer.id = 'group-表情包';
+                        emoticonGroupContainer.id = targetGroupId;
                         apiConfigsContainer.insertBefore(emoticonGroupContainer, ungroupedContainer);
                     } else {
                          apiConfigsContainer.appendChild(groupTitle);
                          emoticonGroupContainer = document.createElement('div');
-                         emoticonGroupContainer.id = 'group-表情包';
+                         emoticonGroupContainer.id = targetGroupId;
                          apiConfigsContainer.appendChild(emoticonGroupContainer);
                     }
                 }
@@ -2022,7 +2024,7 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                         // --- 检查结束 ---
 
                         const newConfigEntry = {
-                            group: "表情包",
+                            group: targetGroupName, // Use the target group name
                             description: \`\${item.name} 表情包\`,
                             url: \`https://696898.xyz/pci?type=\${item.name}\`, // Use original name in URL
                             method: "redirect",
