@@ -1985,14 +1985,41 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 
                 emoticonList.forEach(item => {
                     if (item.name && item.path) { // Basic validation
-                        // Generate Pinyin initial key: get initials, keep non-Zh chars, lowercase, remove spaces, sanitize
-                        let pinyinInitialsRaw = pinyinFunction(item.name, { pattern: 'initial', toneType: 'none', nonZh: 'consecutive' });
-                        let pinyinKey = sanitizeApiKey(pinyinInitialsRaw.toLowerCase().replace(/\s+/g, '')); // Get initials, lowercase, remove spaces, sanitize
-
-                        if (!pinyinInitialsRaw) { // Check raw initials for warning
-                             console.warn(\`无法为 "\${item.name}" 生成拼音首字母 Key，跳过。\`);
-                             return; // Skip if pinyin generation failed
+                        let pinyinKey;
+                        try {
+                            // 尝试生成拼音首字母，保留非中文部分
+                            let pinyinInitialsRaw = pinyinFunction(item.name, { pattern: 'initial', toneType: 'none', nonZh: 'keep' }); 
+                            pinyinKey = sanitizeApiKey(pinyinInitialsRaw.toLowerCase().replace(/\s+/g, ''));
+                        } catch (e) {
+                            console.warn(\`Pinyin generation failed for "\${item.name}": \${e.message}\`);
+                            pinyinKey = null; // 标记生成失败
                         }
+
+                        // 如果拼音生成结果为空或失败，尝试使用原始名称（清理后）
+                        if (!pinyinKey) {
+                            console.warn(\`无法为 "\${item.name}" 生成有效拼音 Key，尝试使用原名。\`);
+                            // 将空格替换为下划线，然后清理
+                            pinyinKey = sanitizeApiKey(item.name.toLowerCase().replace(/\s+/g, '_')); 
+                        }
+
+                        // 最后检查是否成功生成了 Key
+                        if (!pinyinKey) {
+                             console.warn(\`无法为 "\${item.name}" 生成任何有效 Key，跳过。\`);
+                             return; // 如果两种方法都失败，则跳过
+                        }
+                        
+                        // 检查 Key 是否仍然为空（例如，如果原名只包含无效字符）
+                        if (!pinyinKey) {
+                             console.warn(\`为 "\${item.name}" 生成的 Key 清理后为空，跳过。\`);
+                             return;
+                        }
+                        
+                        // --- 新增：检查当前配置中是否已存在该 Key ---
+                        if (currentConfigData.apiUrls[pinyinKey]) {
+                            console.log(\`端点 /\${pinyinKey} (\${item.name}) 已存在于当前配置中，跳过添加。\`);
+                            return; // 在 forEach 回调中使用 return 来跳过当前项
+                        }
+                        // --- 检查结束 ---
 
                         const newConfigEntry = {
                             group: "表情包",
@@ -2003,12 +2030,12 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                             proxySettings: {}
                         };
                         
-                        // Check if card with this key already exists in the UI, remove if it does
-                        const existingCard = apiConfigsContainer.querySelector(\`.card[data-api-key="\${pinyinKey}"]\`);
-                        if (existingCard) {
-                            console.log(\`端点 /\${pinyinKey} 已存在，将覆盖。\`);
-                            existingCard.remove();
-                        }
+                        // // 不再需要检查和移除 UI 元素，因为我们基于数据进行判断
+                        // const existingCard = apiConfigsContainer.querySelector(\`.card[data-api-key="\${pinyinKey}"]\`);
+                        // if (existingCard) {
+                        //     console.log(\`端点 /\${pinyinKey} 已存在，将覆盖。\`);
+                        //     existingCard.remove();
+                        // }
 
                         const cardElement = renderApiEndpoint(pinyinKey, newConfigEntry);
                         emoticonGroupContainer.appendChild(cardElement); // Add card to the "表情包" group
