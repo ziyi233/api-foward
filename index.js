@@ -586,12 +586,202 @@ ${pathFunctions.map(path => `- ${path}`).join('\n')}
     <!-- Optional: Bootstrap Icons CDN (using cdnjs) -->
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { padding-top: 1.5rem; padding-bottom: 3rem; background-color: #f8f9fa; }
+        /* v0 Style Adjustments */
+        :root {
+            --v0-background: #ffffff; /* White background */
+            --v0-foreground: #111827; /* Darker gray text (Tailwind gray-900) */
+            --v0-muted: #f9fafb; /* Lighter gray for muted backgrounds (Tailwind gray-50) */
+            --v0-muted-foreground: #6b7280; /* Medium gray for muted text (Tailwind gray-500) */
+            --v0-border: #e5e7eb; /* Light gray border (Tailwind gray-200) */
+            --v0-input: #d1d5db; /* Input border (Tailwind gray-300) */
+            --v0-primary: #111827; /* Primary color (button bg) - Dark gray */
+            --v0-primary-foreground: #ffffff; /* Text on primary button - White */
+            --v0-secondary: #f3f4f6; /* Secondary button bg (Tailwind gray-100) */
+            --v0-secondary-foreground: #1f2937; /* Text on secondary button (Tailwind gray-800) */
+            --v0-card: #ffffff; /* Card background */
+            --v0-card-foreground: #111827; /* Card text */
+            --v0-radius: 0.5rem; /* Default border radius */
+            --v0-radius-lg: 0.75rem; /* Larger radius */
+            --v0-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Subtle shadow */
+        }
+        body { 
+            padding-top: 2rem; 
+            padding-bottom: 4rem; 
+            background-color: var(--v0-muted); /* Use muted for page background */
+            color: var(--v0-foreground);
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default font stack */
+        }
         .container { max-width: 1140px; }
-        .card img { max-height: 250px; object-fit: contain; }
-        .table td, .table th { vertical-align: middle; }
-        code { font-size: 0.875em; }
+        
+        /* Card Styles */
+        .card { 
+            background-color: var(--v0-card);
+            color: var(--v0-card-foreground);
+            border: 1px solid var(--v0-border); 
+            border-radius: var(--v0-radius-lg); /* Larger radius */
+            box-shadow: var(--v0-shadow); /* Use shadow variable */
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: var(--v0-card); 
+            border-bottom: 1px solid var(--v0-border);
+            padding: 1rem 1.5rem; /* Increased padding */
+            font-weight: 600; /* Bolder header */
+            border-radius: var(--v0-radius-lg) var(--v0-radius-lg) 0 0; /* Match card radius */
+        }
+        .card-body { padding: 1.5rem; }
+        .card-footer { 
+            background-color: var(--v0-muted); 
+            border-top: 1px solid var(--v0-border);
+            color: var(--v0-muted-foreground);
+            padding: 0.75rem 1.5rem; /* Match header padding */
+            border-radius: 0 0 var(--v0-radius-lg) var(--v0-radius-lg); /* Match card radius */
+        }
+        .card img { 
+            max-height: 180px; /* Slightly smaller max height */
+            object-fit: contain; 
+            border-radius: calc(var(--v0-radius-lg) - 1px) calc(var(--v0-radius-lg) - 1px) 0 0; /* Match card radius */
+        }
+        
+        /* Button Styles */
+        .btn {
+             border-radius: var(--v0-radius);
+             padding: 0.5rem 1rem; /* Slightly smaller padding */
+             font-size: 0.875rem; /* Smaller font size */
+             font-weight: 500;
+             transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+             border: 1px solid transparent; /* Ensure border exists for consistent sizing */
+             line-height: 1.25rem; /* Ensure consistent height */
+        }
+        .btn:focus-visible { /* Modern focus ring */
+             outline: 2px solid transparent;
+             outline-offset: 2px;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .btn-primary {
+            background-color: var(--v0-primary);
+            border-color: var(--v0-primary);
+            color: var(--v0-primary-foreground);
+        }
+        .btn-primary:hover {
+            background-color: #374151; /* Tailwind gray-700 */
+            border-color: #374151;
+            color: var(--v0-primary-foreground);
+        }
+        .btn-outline-primary {
+             color: var(--v0-primary);
+             border-color: var(--v0-input); /* Use input border color */
+             background-color: var(--v0-background);
+        }
+         .btn-outline-primary:hover {
+             background-color: var(--v0-secondary);
+             color: var(--v0-secondary-foreground);
+             border-color: var(--v0-input);
+         }
+         .btn-success { /* For copy button success state */
+             background-color: #22c55e; /* Tailwind green-500 */
+             border-color: #22c55e;
+             color: #ffffff;
+         }
+         .btn-success:hover {
+             background-color: #16a34a; /* Tailwind green-600 */
+             border-color: #16a34a;
+             color: #ffffff;
+         }
+        .btn-lg { padding: 0.75rem 1.5rem; font-size: 1rem; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: calc(var(--v0-radius) - 0.125rem); }
+
+        /* Table Styles */
+        .table { 
+            border-color: var(--v0-border); 
+            margin-bottom: 0; 
+        }
+        .table th, .table td { 
+            vertical-align: middle; 
+            padding: 0.75rem 1rem; /* Adjusted padding */
+            border-top: 1px solid var(--v0-border);
+            font-size: 0.875rem; /* Smaller font */
+            line-height: 1.25rem;
+        }
+        .table thead th {
+            border-bottom: 1px solid var(--v0-border); /* Standard border */
+            background-color: var(--v0-muted); 
+            color: var(--v0-muted-foreground); /* Muted text for header */
+            font-weight: 500;
+            text-transform: uppercase; /* Uppercase headers */
+            letter-spacing: 0.05em; /* Slight letter spacing */
+            font-size: 0.75rem; /* Smaller header font */
+        }
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+             background-color: var(--v0-muted); /* Use muted for striping */
+             color: var(--v0-foreground);
+        }
+        .table-hover > tbody > tr:hover > * {
+             background-color: #f3f4f6; /* Tailwind gray-100 */
+             color: var(--v0-foreground);
+        }
+        .table-bordered { border: 1px solid var(--v0-border); }
+        .table-bordered th, .table-bordered td { border: 1px solid var(--v0-border); }
+        .table-responsive { margin-bottom: 1rem; border: 1px solid var(--v0-border); border-radius: var(--v0-radius); overflow: hidden; } /* Add border/radius to responsive container */
+
+        /* Code & Pre Styles */
+        code { 
+            font-size: 0.875em; 
+            color: var(--v0-foreground); 
+            background-color: var(--v0-secondary); /* Use secondary bg */
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem; /* Slightly smaller radius */
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* Monospace font */
+        }
+        pre {
+            background-color: var(--v0-secondary); /* Use secondary bg */
+            border: 1px solid var(--v0-border);
+            border-radius: var(--v0-radius);
+            padding: 1rem;
+            color: var(--v0-foreground);
+            white-space: pre-wrap; 
+            word-break: break-word; 
+            font-size: 0.875rem;
+            line-height: 1.5;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* Monospace font */
+        }
+        
+        /* Alert Styles */
+        .alert {
+             border-radius: var(--v0-radius);
+             border: 1px solid transparent;
+             padding: 0.75rem 1rem; /* Adjusted padding */
+             font-size: 0.875rem;
+        }
+        .alert-info {
+             color: #0c5460; /* Keep original colors for now */
+             background-color: #d1ecf1;
+             border-color: #bee5eb;
+        }
+        .alert-info .bi { 
+             margin-right: 0.5rem;
+             vertical-align: text-bottom; /* Align icon better */
+        }
+
+        /* Other Styles */
+        .p-5 { padding: 3rem !important; } /* Increased padding */
+        .py-5 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+        .mb-4 { margin-bottom: 1.5rem !important; }
+        .mt-4 { margin-top: 1.5rem !important; }
+        .mt-3 { margin-top: 1rem !important; }
+        .mt-2 { margin-top: 0.5rem !important; }
+        .bg-light { background-color: var(--v0-card) !important; border: 1px solid var(--v0-border); } /* Use card bg and add border */
+        .rounded-3 { border-radius: var(--v0-radius-lg) !important; } /* Use large radius */
+        .text-muted { color: var(--v0-muted-foreground) !important; }
+        .fw-bold { font-weight: 600 !important; } 
+        .display-5 { font-size: 2.25rem; font-weight: 700; } /* Slightly smaller, bolder */
+        .fs-4 { font-size: 1.125rem; line-height: 1.75rem; } /* Adjusted size and line height */
+        h1, h2, h3, h5 { font-weight: 600; color: var(--v0-foreground); }
+        h2.h5 { font-size: 1rem; font-weight: 600; } /* Adjust size for card headers */
         hr.my-1 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; opacity: 0.1;}
+        .badge { border-radius: 0.375rem; padding: 0.25em 0.6em; font-weight: 500; font-size: 0.75rem; } /* Smaller badge */
+        .bg-primary { background-color: var(--v0-primary) !important; color: var(--v0-primary-foreground); }
+        .bg-secondary { background-color: var(--v0-secondary) !important; color: var(--v0-secondary-foreground); }
     </style>
 </head>
 <body>
@@ -726,30 +916,123 @@ app.get('/admin-login', (req, res) => {
     <title>API 转发管理登录</title>
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
     <style>
+        /* v0 Style Adjustments */
+        :root {
+            --v0-background: #ffffff; /* White background */
+            --v0-foreground: #09090b; /* Near black text */
+            --v0-muted: #f9fafb; /* Lighter gray (Tailwind gray-50) */
+            --v0-muted-foreground: #6b7280; /* Medium gray (Tailwind gray-500) */
+            --v0-border: #e5e7eb; /* Light gray border (Tailwind gray-200) */
+            --v0-input: #d1d5db; /* Input border (Tailwind gray-300) */
+            --v0-primary: #111827; /* Dark gray (Tailwind gray-900) */
+            --v0-primary-foreground: #ffffff; /* White */
+            --v0-destructive: #ef4444; /* Red (Tailwind red-500) */
+            --v0-destructive-foreground: #ffffff; /* White */
+            --v0-card: #ffffff; /* Card background */
+            --v0-card-foreground: #111827; /* Card text */
+            --v0-radius: 0.5rem; /* Default border radius */
+            --v0-radius-lg: 0.75rem; /* Larger radius */
+            --v0-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Subtle shadow */
+        }
         body { 
-            background-color: #f8f9fa; 
+            background-color: var(--v0-muted); 
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default font stack */
+            color: var(--v0-foreground);
         }
         .login-container {
             max-width: 400px;
             width: 100%;
-            padding: 2rem;
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            padding: 2.5rem; 
+            background-color: var(--v0-card);
+            border-radius: var(--v0-radius-lg); /* Larger radius */
+            border: 1px solid var(--v0-border);
+            box-shadow: var(--v0-shadow); /* Use shadow variable */
         }
         .login-header {
             text-align: center;
             margin-bottom: 2rem;
         }
-        .error-message {
-            color: #dc3545;
-            margin-bottom: 1rem;
-            display: none;
+        .login-header h2 {
+            font-size: 1.5rem; /* Slightly smaller heading */
+            font-weight: 600;
+            color: var(--v0-foreground);
+            margin-bottom: 0.5rem;
         }
+        .login-header p {
+            color: var(--v0-muted-foreground);
+            font-size: 0.875rem; /* Smaller text */
+        }
+        .error-message {
+            color: var(--v0-destructive); 
+            background-color: #fef2f2; /* Tailwind red-50 */
+            border: 1px solid #fca5a5; /* Tailwind red-300 */
+            border-radius: var(--v0-radius); /* Standard radius */
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            display: none; 
+        }
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--v0-foreground);
+        }
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem; /* Adjusted padding */
+            font-size: 0.875rem; /* Smaller font */
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            background-clip: padding-box;
+            border: 1px solid var(--v0-input);
+            appearance: none;
+            border-radius: var(--v0-radius);
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        .form-control:focus {
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            border-color: var(--v0-primary); 
+            outline: 0;
+            box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary); /* Modern focus ring */
+        }
+        .btn {
+             border-radius: var(--v0-radius);
+             padding: 0.5rem 1rem; /* Adjusted padding */
+             font-size: 0.875rem; /* Smaller font */
+             font-weight: 500;
+             transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+             display: inline-flex; 
+             align-items: center;
+             justify-content: center;
+             line-height: 1.25rem; /* Consistent height */
+             border: 1px solid transparent;
+        }
+         .btn:focus-visible { /* Modern focus ring */
+             outline: 2px solid transparent;
+             outline-offset: 2px;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .btn-primary {
+            background-color: var(--v0-primary);
+            border-color: var(--v0-primary);
+            color: var(--v0-primary-foreground);
+        }
+        .btn-primary:hover {
+            background-color: #374151; /* Tailwind gray-700 */
+            border-color: #374151;
+            color: var(--v0-primary-foreground);
+        }
+        .w-100 { width: 100% !important; }
+        .mb-3 { margin-bottom: 1rem !important; } /* Reduced margin */
     </style>
 </head>
 <body>
@@ -840,29 +1123,293 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API 转发配置管理 (Bootstrap)</title>
+    <title>API 转发配置管理</title>
     <!-- 新 Bootstrap5 核心 CSS 文件 -->
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
     <!-- Optional: Bootstrap Icons CDN (using cdnjs) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { background-color: #f8f9fa; padding-top: 1.5rem; padding-bottom: 3rem; }
+        /* v0 Style Adjustments */
+        :root {
+            --v0-background: #ffffff; /* White background */
+            --v0-foreground: #09090b; /* Near black text */
+            --v0-muted: #f9fafb; /* Lighter gray (Tailwind gray-50) */
+            --v0-muted-foreground: #6b7280; /* Medium gray (Tailwind gray-500) */
+            --v0-border: #e5e7eb; /* Light gray border (Tailwind gray-200) */
+            --v0-input: #d1d5db; /* Input border (Tailwind gray-300) */
+            --v0-primary: #111827; /* Dark gray (Tailwind gray-900) */
+            --v0-primary-foreground: #ffffff; /* White */
+            --v0-secondary: #f3f4f6; /* Secondary button bg (Tailwind gray-100) */
+            --v0-secondary-foreground: #1f2937; /* Text on secondary button (Tailwind gray-800) */
+            --v0-destructive: #ef4444; /* Red (Tailwind red-500) */
+            --v0-destructive-foreground: #ffffff; /* White */
+            --v0-success: #22c55e; /* Green (Tailwind green-500) */
+            --v0-success-foreground: #ffffff; /* White */
+            --v0-card: #ffffff; /* Card background */
+            --v0-card-foreground: #111827; /* Card text */
+            --v0-radius: 0.5rem; /* Default border radius */
+            --v0-radius-sm: 0.375rem; /* Smaller radius */
+            --v0-radius-lg: 0.75rem; /* Larger radius */
+            --v0-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Subtle shadow */
+        }
+        body { 
+            background-color: var(--v0-muted); 
+            padding-top: 2rem; 
+            padding-bottom: 4rem; 
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default font stack */
+            color: var(--v0-foreground);
+        }
         .container { max-width: 960px; }
-        .card { margin-bottom: 1.5rem; }
-        .card-header { background-color: rgba(0, 123, 255, 0.05); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .api-key-input { font-weight: bold; border: none; border-bottom: 1px dashed #0d6efd; padding: 2px 5px; background: transparent; color: #0d6efd; margin-left: 0.25rem; width: auto; max-width: 250px; }
-        .api-key-input:focus { outline: none; border-bottom-style: solid; }
-        .config-item { margin-bottom: 1rem; }
-        .config-item label { font-weight: 500; color: #495057; }
-        .proxy-settings, .query-params { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
-        .param-item { border: 1px solid #e9ecef; padding: 1rem; margin-bottom: 1rem; border-radius: 0.375rem; background-color: #fff; position: relative; }
-        .param-item .remove-param-button { position: absolute; top: 0.5rem; right: 0.5rem; }
-        .tooltip-icon { cursor: help; color: #6c757d; margin-left: 0.25rem; }
-        #message { margin-top: 1.5rem; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
-        .add-endpoint-button { margin-bottom: 1.5rem; }
-        .group-title { margin-top: 2rem; margin-bottom: 1rem; font-size: 1.5rem; color: #6c757d; border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem; }
-        .global-setting-item { padding: 1rem; border: 1px solid #cfe2ff; background-color: #ecf5ff; border-radius: 0.375rem; margin-bottom: 1.5rem; }
+        
+        /* Card Styles */
+        .card { 
+            background-color: var(--v0-card);
+            color: var(--v0-card-foreground);
+            border: 1px solid var(--v0-border); 
+            border-radius: var(--v0-radius-lg); 
+            box-shadow: var(--v0-shadow); /* Use shadow variable */
+            margin-bottom: 1.5rem; 
+        }
+        .card-header { 
+            background-color: var(--v0-card); 
+            border-bottom: 1px solid var(--v0-border);
+            padding: 1rem 1.5rem; 
+            font-weight: 600; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-radius: var(--v0-radius-lg) var(--v0-radius-lg) 0 0; 
+        }
+        .card-body { padding: 1.5rem; }
+
+        /* API Key Input in Header */
+        .api-key-input { 
+            font-weight: 600; 
+            border: none; 
+            border-bottom: 1px solid var(--v0-input); /* Use input border color */
+            padding: 0.25rem 0.5rem; 
+            background: transparent; 
+            color: var(--v0-primary); 
+            margin-left: 0.5rem; 
+            width: auto; 
+            max-width: 250px; 
+            border-radius: 0; 
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            font-size: 1rem; /* Match header font size */
+        }
+        .api-key-input:focus { 
+            outline: none; 
+            border-bottom-color: var(--v0-primary); 
+            box-shadow: 0 1px 0 0 var(--v0-primary); /* Subtle bottom focus shadow */
+        }
+        
+        /* Form Elements */
+        .form-label {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--v0-foreground);
+            margin-bottom: 0.375rem; /* Adjusted margin */
+        }
+        .col-form-label { padding-top: calc(0.5rem + 1px); padding-bottom: calc(0.5rem + 1px); font-size: 0.875rem; } 
+        .form-control, .form-select {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem; 
+            font-size: 0.875rem; 
+            font-weight: 400;
+            line-height: 1.25rem; /* Consistent line height */
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            background-clip: padding-box;
+            border: 1px solid var(--v0-input);
+            appearance: none;
+            border-radius: var(--v0-radius); 
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        textarea.form-control { min-height: calc(1.25rem * 3 + 1rem + 2px); } /* Adjust based on line height */
+        .form-control:focus, .form-select:focus {
+            color: var(--v0-foreground);
+            background-color: var(--v0-background);
+            border-color: var(--v0-primary);
+            outline: 0;
+            box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary); /* Modern focus ring */
+        }
+        .form-control[readonly] {
+             background-color: var(--v0-muted);
+             opacity: 0.7; /* Slightly faded */
+             cursor: not-allowed;
+        }
+        .form-check-input {
+             width: 1em; /* Standard size */
+             height: 1em;
+             margin-top: 0.25em; /* Adjust alignment */
+             border-radius: 0.25em;
+             border: 1px solid var(--v0-input);
+        }
+        .form-check-input:focus {
+             border-color: var(--v0-primary);
+             outline: 0;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .form-check-input:checked {
+             background-color: var(--v0-primary);
+             border-color: var(--v0-primary);
+        }
+        .form-switch .form-check-input {
+             width: 2em; /* Standard switch width */
+             margin-left: -2.5em;
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(107, 114, 128, 0.25)'/%3e%3c/svg%3e"); /* Gray-500 at 25% opacity */
+             background-position: left center;
+             border-radius: 2em;
+             transition: background-position .15s ease-in-out;
+        }
+        .form-switch .form-check-input:focus {
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(107, 114, 128, 0.25)'/%3e%3c/svg%3e");
+        }
+        .form-switch .form-check-input:checked {
+             background-position: right center;
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e"); 
+        }
+        .form-check-label { font-size: 0.875rem; padding-left: 0.5em; } /* Add padding for switch */
+        
+        /* Buttons */
+        .btn {
+             border-radius: var(--v0-radius);
+             padding: 0.5rem 1rem; 
+             font-size: 0.875rem;
+             font-weight: 500;
+             transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, opacity 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+             display: inline-flex;
+             align-items: center;
+             justify-content: center;
+             gap: 0.375rem; /* Reduced gap */
+             line-height: 1.25rem; /* Consistent height */
+             border: 1px solid transparent;
+        }
+         .btn:focus-visible { /* Modern focus ring */
+             outline: 2px solid transparent;
+             outline-offset: 2px;
+             box-shadow: 0 0 0 2px var(--v0-background), 0 0 0 4px var(--v0-primary);
+        }
+        .btn-primary {
+            background-color: var(--v0-primary); border-color: var(--v0-primary); color: var(--v0-primary-foreground);
+        }
+        .btn-primary:hover { background-color: #374151; border-color: #374151; color: var(--v0-primary-foreground); } /* Tailwind gray-700 */
+        .btn-primary:disabled { background-color: var(--v0-primary); border-color: var(--v0-primary); color: var(--v0-primary-foreground); opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-success { 
+            background-color: var(--v0-success); border-color: var(--v0-success); color: var(--v0-success-foreground);
+        }
+        .btn-success:hover { background-color: #16a34a; border-color: #16a34a; } /* Tailwind green-600 */
+        
+        .btn-danger { 
+            background-color: var(--v0-destructive); border-color: var(--v0-destructive); color: var(--v0-destructive-foreground);
+        }
+        .btn-danger:hover { background-color: #dc2626; border-color: #dc2626; } /* Tailwind red-600 */
+        
+        .btn-outline-secondary { 
+             color: var(--v0-secondary-foreground);
+             border-color: var(--v0-input);
+             background-color: var(--v0-background);
+        }
+         .btn-outline-secondary:hover {
+             background-color: var(--v0-secondary);
+             border-color: var(--v0-input);
+             color: var(--v0-secondary-foreground);
+         }
+        
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: var(--v0-radius-sm); gap: 0.25rem; }
+        .btn-lg { padding: 0.625rem 1.25rem; font-size: 1rem; } /* Adjusted large button */
+        .save-button .spinner-border { width: 1em; height: 1em; border-width: .15em; } /* Thinner spinner */
+
+        /* Specific Sections */
+        .proxy-settings, .query-params { 
+            margin-top: 1.5rem; 
+            padding-top: 1.5rem; 
+            border-top: 1px solid var(--v0-border); 
+        }
+        .proxy-settings h5, .query-params h5 {
+             font-size: 0.875rem; /* Smaller heading */
+             font-weight: 600;
+             margin-bottom: 1rem;
+             color: var(--v0-foreground);
+             text-transform: uppercase; /* Uppercase subheadings */
+             letter-spacing: 0.05em;
+        }
+        .param-item { 
+            border: 1px solid var(--v0-border); 
+            padding: 1rem; 
+            margin-bottom: 1rem; 
+            border-radius: var(--v0-radius); 
+            background-color: var(--v0-muted); /* Muted background for param items */
+            position: relative; 
+        }
+        .param-item .remove-param-button { 
+            position: absolute; 
+            top: 0.5rem; 
+            right: 0.5rem; 
+            padding: 0.1rem 0.4rem; 
+            background-color: var(--v0-background); /* Ensure visibility on muted bg */
+            border-color: var(--v0-border);
+            color: var(--v0-destructive);
+        }
+         .param-item .remove-param-button:hover {
+             background-color: var(--v0-destructive);
+             border-color: var(--v0-destructive);
+             color: var(--v0-destructive-foreground);
+         }
+        .global-setting-item { 
+            padding: 1rem 1.5rem; 
+            border: 1px solid var(--v0-border); 
+            background-color: var(--v0-muted); 
+            border-radius: var(--v0-radius); 
+            margin-bottom: 1.5rem; 
+        }
+        .group-title { 
+            margin-top: 2rem; /* Reduced top margin */
+            margin-bottom: 1rem; 
+            font-size: 1.125rem; /* Adjusted group title size */
+            font-weight: 600;
+            color: var(--v0-muted-foreground); 
+            border-bottom: 1px solid var(--v0-border); 
+            padding-bottom: 0.5rem; 
+        }
+        .group-title:first-of-type { margin-top: 0; } 
+
+        /* Alert/Message Styles */
+        #message { 
+            margin-top: 1.5rem; 
+            border-radius: var(--v0-radius);
+            padding: 0.75rem 1rem; /* Adjusted padding */
+            font-size: 0.875rem;
+        }
+        .alert-success {
+             color: #0f5132; /* Tailwind green-800 */
+             background-color: #d1fae5; /* Tailwind green-100 */
+             border-color: #a7f3d0; /* Tailwind green-200 */
+        }
+        .alert-danger {
+             color: #991b1b; /* Tailwind red-800 */
+             background-color: #fee2e2; /* Tailwind red-100 */
+             border-color: #fca5a5; /* Tailwind red-300 */
+        }
+        
+        /* Tooltip */
+        .tooltip-icon { cursor: help; color: var(--v0-muted-foreground); margin-left: 0.25rem; vertical-align: middle; }
+        .tooltip-inner { background-color: var(--v0-primary); color: var(--v0-primary-foreground); font-size: 0.75rem; padding: 0.375rem 0.625rem; border-radius: var(--v0-radius-sm); box-shadow: var(--v0-shadow); }
+        .tooltip.bs-tooltip-top .tooltip-arrow::before { border-top-color: var(--v0-primary); }
+        .tooltip.bs-tooltip-bottom .tooltip-arrow::before { border-bottom-color: var(--v0-primary); }
+        .tooltip.bs-tooltip-start .tooltip-arrow::before { border-left-color: var(--v0-primary); }
+        .tooltip.bs-tooltip-end .tooltip-arrow::before { border-right-color: var(--v0-primary); }
+
+        /* Utility Overrides */
+        .mb-4 { margin-bottom: 1.5rem !important; }
+        .mt-4 { margin-top: 1.5rem !important; }
+        .text-muted { color: var(--v0-muted-foreground) !important; }
+        .text-sm-end { text-align: right !important; } 
+        .h3 { font-size: 1.25rem; font-weight: 600; } /* Smaller main heading */
+        .spinner-border { color: var(--v0-primary); }
+        .spinner-border-sm { width: 1rem; height: 1rem; border-width: 0.15em; }
     </style>
 </head>
 <body>
