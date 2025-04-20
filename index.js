@@ -1413,14 +1413,41 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 <body>
     <main class="container">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-             <h1 class="h3 mb-0">API 转发配置管理</h1>
+            <h1 class="h3 mb-0">API 转发配置管理</h1>
              <div class="d-flex gap-2 flex-wrap">
-                 <button type="button" class="btn btn-info fetch-emoticons-button" onclick="fetchAndAddEmoticons(this)" disabled><i class="bi bi-cloud-download"></i> 在线拉取表情包</button> 
+                 <button type="button" class="btn btn-info fetch-emoticons-button" onclick="fetchAndAddEmoticons(this)" disabled><i class="bi bi-cloud-download"></i> 在线拉取表情包</button>
+                 <button type="button" class="btn btn-secondary" onclick="addNewGroup()"><i class="bi bi-folder-plus"></i> 添加新分组</button> <!-- Add New Group Button -->
                  <button type="button" class="btn btn-success add-endpoint-button" onclick="addApiEndpoint()"><i class="bi bi-plus-lg"></i> 添加新 API 端点</button>
+                 <a href="/admin-logout" class="btn btn-outline-secondary"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
              </div>
         </div>
 
         <p class="text-muted mb-4">在这里修改、添加或删除 API 转发规则。点击“在线拉取表情包”可自动添加常用表情包 API。所有更改将在点击下方“保存所有配置”按钮后**立即生效**。</p>
+
+        <!-- Batch Actions Section -->
+        <div id="batch-actions-section" class="card mb-4" style="display: none;">
+            <div class="card-body d-flex flex-wrap align-items-center gap-3">
+                 <div class="form-check">
+                     <input class="form-check-input" type="checkbox" value="" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)">
+                     <label class="form-check-label" for="select-all-checkbox">
+                         全选/取消
+                     </label>
+                 </div>
+                 <button id="batch-delete-button" type="button" class="btn btn-danger btn-sm" onclick="batchDeleteEndpoints()" disabled>
+                     <i class="bi bi-trash"></i> 批量删除 (<span id="selected-count">0</span>)
+                 </button>
+                 <div class="input-group input-group-sm" style="max-width: 300px;">
+                     <label class="input-group-text" for="batch-move-group-select">移动到分组:</label>
+                     <select class="form-select" id="batch-move-group-select" disabled>
+                         <option value="" selected disabled>选择目标分组...</option>
+                         {/* Group options will be populated by JS */}
+                     </select>
+                     <button id="batch-move-button" class="btn btn-outline-primary" type="button" onclick="batchMoveGroup()" disabled>
+                         <i class="bi bi-folder-symlink"></i> 移动
+                     </button>
+                 </div>
+            </div>
+        </div>
 
         <form id="config-form">
             <div id="api-configs-container">
@@ -1513,9 +1540,12 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             card.setAttribute('data-api-key', apiKey);
 
             const cardHeader = document.createElement('div');
-            cardHeader.className = 'card-header';
+            cardHeader.className = 'card-header d-flex justify-content-between align-items-center'; // Use flexbox for alignment
             cardHeader.innerHTML = \`
-                <span>端点: /<input type="text" value="\${apiKey}" class="api-key-input" aria-label="API 端点路径" placeholder="路径名" required></span>
+                <div class="d-flex align-items-center">
+                     <input class="form-check-input me-2 endpoint-checkbox" type="checkbox" value="\${apiKey}" onchange="handleCheckboxChange()">
+                     <span>端点: /<input type="text" value="\${apiKey}" class="api-key-input" aria-label="API 端点路径" placeholder="路径名" required></span>
+                </div>
                 <button type="button" class="btn btn-danger btn-sm delete-endpoint-button" aria-label="删除此端点" onclick="removeApiEndpoint(this.closest('.card'))">
                     <i class="bi bi-trash"></i> 删除
                 </button>\`;
@@ -1643,35 +1673,77 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         }
 
         function renderConfig() {
-            disposeAllTooltips();
+            disposeAllTooltips(); // Dispose existing tooltips before clearing
             apiConfigsContainer.innerHTML = '';
+            // --- Get references to batch elements ---
+            const batchActionsSection = document.getElementById('batch-actions-section');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const batchMoveGroupSelect = document.getElementById('batch-move-group-select');
+            // --- Ensure elements exist before proceeding ---
+            if (!batchActionsSection || !selectAllCheckbox || !batchMoveGroupSelect) {
+                 console.error("Batch action elements not found in the DOM!");
+                 return; // Stop rendering if essential elements are missing
+            }
+
+            // Clear previous group options in batch move dropdown
+            batchMoveGroupSelect.innerHTML = '<option value="" selected disabled>选择目标分组...</option>';
+            // Add "未分组" option explicitly
+            batchMoveGroupSelect.add(new Option('未分组', '未分组'));
 
             const apiUrls = currentConfigData.apiUrls || {};
             const groupedEndpoints = {};
+            const allGroupNames = new Set(['未分组']); // Start with '未分组'
 
             for (const apiKey in apiUrls) {
                 const entry = apiUrls[apiKey];
                 const group = entry.group || '未分组';
+                allGroupNames.add(group); // Collect all unique group names
                 if (!groupedEndpoints[group]) { groupedEndpoints[group] = []; }
                 groupedEndpoints[group].push({ key: apiKey, config: entry });
             }
 
-            const sortedGroups = Object.keys(groupedEndpoints).sort((a, b) => {
-                 const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '未分组': 99};
+            // Populate batch move dropdown with sorted unique group names
+            const sortedAllGroupNames = Array.from(allGroupNames).sort((a, b) => {
+                 const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '696898': 6, '未分组': 99}; // Added 696898
                  return (order[a] || 99) - (order[b] || 99);
             });
+            sortedAllGroupNames.forEach(groupName => {
+                 if (groupName !== '未分组') { // Avoid adding '未分组' twice
+                     batchMoveGroupSelect.add(new Option(groupName, groupName));
+                 }
+            });
 
-            if (sortedGroups.length === 0) {
+
+            const sortedGroups = Object.keys(groupedEndpoints).sort((a, b) => {
+                 const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '696898': 6, '未分组': 99}; // Added 696898
+                 return (order[a] || 99) - (order[b] || 99);
+            });
+            
+            console.log('[Debug] Batch Actions Section Element:', batchActionsSection); // Debug Log 1
+            const numApiUrls = Object.keys(apiUrls).length;
+            console.log('[Debug] Number of API URLs:', numApiUrls); // Debug Log 2
+
+            // --- Always show batch section, buttons might be disabled if empty ---
+            console.log('[Debug] Ensuring batch actions section is visible.'); // Debug Log 3b
+            batchActionsSection.style.display = 'block'; // Always show batch actions
+
+            // --- Render groups and endpoints ---
+            if (numApiUrls === 0) {
                  apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
             } else {
-                sortedGroups.forEach(groupName => {
+                 // Clear container before rendering groups
+                 apiConfigsContainer.innerHTML = '';
+                 sortedGroups.forEach(groupName => {
                     const groupContainer = document.createElement('div'); // Container for the group
                     groupContainer.id = \`group-\${groupName.replace(/\\s+/g, '-')}\`; // Create an ID for the group container
 
                     const groupTitle = document.createElement('h2');
-                    groupTitle.className = 'group-title';
-                    groupTitle.textContent = groupName;
-                    groupContainer.appendChild(groupTitle); // Add title to group container
+                    groupTitle.className = 'group-title d-flex align-items-center'; // Use flex for alignment
+                    groupTitle.innerHTML = \`
+                         <input type="checkbox" class="form-check-input me-2 group-select-all-checkbox" onchange="toggleSelectGroup(this, '\${groupName}')" aria-label="全选/取消全选 \${groupName} 分组">
+                         \${groupName}
+                    \`;
+                    groupContainer.appendChild(groupTitle); // Add title with checkbox to group container
 
                     // Inject Global Settings into AI Group
                     if (groupName === 'AI绘图') {
@@ -1790,8 +1862,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             if (confirm(\`确定要删除端点 "\${keyToRemove}" 吗？此操作将在保存后生效且无法撤销。\`)) {
                 const parentGroupContainer = card.parentElement;
                 card.remove();
+                handleCheckboxChange(); // Update batch counts after removing
                  if (!apiConfigsContainer.querySelector('.card')) {
                      apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
+                     document.getElementById('batch-actions-section').style.display = 'none'; // Hide batch actions
                  } else if (parentGroupContainer && !parentGroupContainer.querySelector('.card')) {
                       const groupTitle = parentGroupContainer.previousElementSibling;
                       if (groupTitle && groupTitle.classList.contains('group-title')) {
@@ -1803,14 +1877,261 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             }
         }
 
+        // --- Batch Action Functions ---
+
+        function getSelectedApiKeys() {
+            return Array.from(apiConfigsContainer.querySelectorAll('.endpoint-checkbox:checked')).map(cb => cb.value);
+        }
+
+        function updateBatchActionButtonsState() {
+            const selectedKeys = getSelectedApiKeys();
+            const count = selectedKeys.length;
+            const batchDeleteButton = document.getElementById('batch-delete-button');
+            const batchMoveButton = document.getElementById('batch-move-button');
+            const batchMoveGroupSelect = document.getElementById('batch-move-group-select');
+            const selectedCountSpan = document.getElementById('selected-count');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const allCheckboxes = apiConfigsContainer.querySelectorAll('.endpoint-checkbox');
+
+            selectedCountSpan.textContent = count;
+            batchDeleteButton.disabled = count === 0;
+            batchMoveButton.disabled = count === 0 || !batchMoveGroupSelect.value;
+            batchMoveGroupSelect.disabled = count === 0;
+
+            // Update main select-all checkbox state
+            if (allCheckboxes.length > 0 && count === allCheckboxes.length) {
+                 selectAllCheckbox.checked = true;
+                 selectAllCheckbox.indeterminate = false;
+            } else if (count > 0) {
+                 selectAllCheckbox.checked = false;
+                 selectAllCheckbox.indeterminate = true;
+            } else {
+                 selectAllCheckbox.checked = false;
+                 selectAllCheckbox.indeterminate = false;
+            }
+
+            // Update group select-all checkboxes
+            document.querySelectorAll('.group-select-all-checkbox').forEach(groupCb => {
+                 const groupContainer = groupCb.closest('div[id^="group-"]');
+                 if (!groupContainer) return;
+                 const groupCheckboxes = groupContainer.querySelectorAll('.endpoint-checkbox');
+                 const groupSelectedCount = groupContainer.querySelectorAll('.endpoint-checkbox:checked').length;
+
+                 if (groupCheckboxes.length > 0 && groupSelectedCount === groupCheckboxes.length) {
+                     groupCb.checked = true;
+                     groupCb.indeterminate = false;
+                 } else if (groupSelectedCount > 0) {
+                     groupCb.checked = false;
+                     groupCb.indeterminate = true;
+                 } else {
+                     groupCb.checked = false;
+                     groupCb.indeterminate = false;
+                 }
+            });
+        }
+
+        function handleCheckboxChange() {
+            updateBatchActionButtonsState();
+        }
+
+        function toggleSelectAll(checked) {
+            apiConfigsContainer.querySelectorAll('.endpoint-checkbox').forEach(cb => {
+                cb.checked = checked;
+            });
+            handleCheckboxChange();
+        }
+
+        function toggleSelectGroup(groupCheckbox, groupName) {
+             const groupContainer = document.getElementById(\`group-\${groupName.replace(/\\s+/g, '-')}\`);
+             if (groupContainer) {
+                 groupContainer.querySelectorAll('.endpoint-checkbox').forEach(cb => {
+                     cb.checked = groupCheckbox.checked;
+                 });
+             }
+             handleCheckboxChange();
+        }
+
+        function batchDeleteEndpoints() {
+            const selectedKeys = getSelectedApiKeys();
+            if (selectedKeys.length === 0) {
+                showMessage('请先选择要删除的端点。', 'error');
+                return;
+            }
+            if (confirm(\`确定要删除选中的 \${selectedKeys.length} 个端点吗？此操作将在保存后生效且无法撤销。\`)) {
+                let deletedCount = 0;
+                selectedKeys.forEach(apiKey => {
+                    const card = apiConfigsContainer.querySelector(\`.card[data-api-key="\${apiKey}"]\`);
+                    if (card) {
+                        const parentGroupContainer = card.parentElement;
+                        card.remove();
+                        deletedCount++;
+                         // Check if group is now empty
+                         if (parentGroupContainer && !parentGroupContainer.querySelector('.card')) {
+                             const groupTitle = parentGroupContainer.previousElementSibling;
+                             if (groupTitle && groupTitle.classList.contains('group-title')) {
+                                 groupTitle.remove();
+                             }
+                             parentGroupContainer.remove();
+                         }
+                    }
+                });
+                handleCheckboxChange(); // Update counts and button states
+                showMessage(\`已标记删除 \${deletedCount} 个端点。点击“保存所有配置”以确认。\`, 'success');
+                 if (!apiConfigsContainer.querySelector('.card')) {
+                     apiConfigsContainer.innerHTML = '<div class="alert alert-info">当前没有配置任何 API 端点。点击“添加新 API 端点”开始。</div>';
+                     document.getElementById('batch-actions-section').style.display = 'none'; // Hide batch actions
+                 }
+            }
+        }
+
+        function batchMoveGroup() {
+            const selectedKeys = getSelectedApiKeys();
+            const targetGroup = document.getElementById('batch-move-group-select').value;
+
+            if (selectedKeys.length === 0) {
+                showMessage('请先选择要移动的端点。', 'error');
+                return;
+            }
+            if (!targetGroup) {
+                showMessage('请选择目标分组。', 'error');
+                return;
+            }
+
+            let movedCount = 0;
+            selectedKeys.forEach(apiKey => {
+                const card = apiConfigsContainer.querySelector(\`.card[data-api-key="\${apiKey}"]\`);
+                if (card) {
+                    const groupInput = card.querySelector(\`input[id="\${apiKey}-group"]\`);
+                    if (groupInput) {
+                        groupInput.value = targetGroup;
+                        movedCount++;
+                    }
+                }
+            });
+
+            // Re-render the entire config to reflect the group changes visually
+            // This is simpler than manually moving cards between group containers
+            showMessage(\`已将 \${movedCount} 个端点的分组更改为 "\${targetGroup}"。点击“保存所有配置”以确认。\`, 'success');
+            // Temporarily store current form data before re-rendering
+            const currentFormData = collectFormData();
+            currentConfigData.apiUrls = currentFormData.apiUrls; // Update in-memory data
+            currentConfigData.baseTag = currentFormData.baseTag;
+            renderConfig(); // Re-render based on updated in-memory data
+            // Restore checkbox states after re-render (optional, but good UX)
+            selectedKeys.forEach(apiKey => {
+                 const newCheckbox = apiConfigsContainer.querySelector(\`.endpoint-checkbox[value="\${apiKey}"]\`);
+                 if (newCheckbox) newCheckbox.checked = true;
+            });
+            handleCheckboxChange(); // Update batch counts again after re-render
+        }
+
+        function addNewGroup() {
+            const newGroupName = prompt("请输入新分组的名称:", "");
+            if (!newGroupName || !newGroupName.trim()) {
+                showMessage("分组名称不能为空。", "error");
+                return;
+            }
+            const trimmedGroupName = newGroupName.trim();
+            const groupId = \`group-\${trimmedGroupName.replace(/\\s+/g, '-')}\`;
+
+            // 检查分组是否已存在 (UI层面)
+            if (document.getElementById(groupId)) {
+                showMessage(\`分组 "\${trimmedGroupName}" 已经存在。\`, "error");
+                return;
+            }
+
+            // 创建分组标题和容器
+            const groupContainer = document.createElement('div');
+            groupContainer.id = groupId;
+
+            const groupTitle = document.createElement('h2');
+            groupTitle.className = 'group-title d-flex align-items-center';
+            groupTitle.innerHTML = \`
+                 <input type="checkbox" class="form-check-input me-2 group-select-all-checkbox" onchange="toggleSelectGroup(this, '\${trimmedGroupName}')" aria-label="全选/取消全选 \${trimmedGroupName} 分组">
+                 \${trimmedGroupName}
+            \`;
+            groupContainer.appendChild(groupTitle);
+
+            // 将新分组添加到容器末尾 (或者可以根据排序规则插入)
+            apiConfigsContainer.appendChild(groupContainer);
+
+            // 更新批量移动下拉列表
+            const batchMoveGroupSelect = document.getElementById('batch-move-group-select');
+            // 检查是否已存在该选项
+            let exists = false;
+            for (let i = 0; i < batchMoveGroupSelect.options.length; i++) {
+                if (batchMoveGroupSelect.options[i].value === trimmedGroupName) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                 batchMoveGroupSelect.add(new Option(trimmedGroupName, trimmedGroupName));
+                 // 可选：对下拉列表重新排序
+                 sortSelectOptions(batchMoveGroupSelect);
+            }
+
+
+            showMessage(\`新分组 "\${trimmedGroupName}" 已添加。您可以在此分组下添加端点，或将现有端点移动到此分组。记得保存配置。\`, 'success');
+            groupTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Helper function to sort select options (used after adding a new group)
+        function sortSelectOptions(selectElement) {
+            const options = Array.from(selectElement.options);
+            // 保留第一个 "选择目标分组..." 选项
+            const firstOption = options.shift();
+            const order = {'通用转发': 1, 'AI绘图': 2, '二次元图片': 3, '三次元图片': 4, '表情包': 5, '696898': 6, '未分组': 99};
+            options.sort((a, b) => {
+                 const orderA = order[a.value] || 99;
+                 const orderB = order[b.value] || 99;
+                 return orderA - orderB || a.text.localeCompare(b.text);
+            });
+            selectElement.innerHTML = ''; // 清空
+            selectElement.appendChild(firstOption); // 重新添加第一个选项
+            options.forEach(option => selectElement.appendChild(option));
+        }
+
+
+        // Helper function to collect current form data before re-rendering after move
+        function collectFormData() {
+             const updatedApiUrls = {};
+             const cards = apiConfigsContainer.querySelectorAll('.card[data-api-key]');
+             cards.forEach(card => {
+                 const apiKeyInput = card.querySelector('.api-key-input');
+                 const apiKey = sanitizeApiKey(apiKeyInput.value.trim());
+                 const originalApiKey = card.getAttribute('data-api-key');
+                 if (!apiKey) return; // Skip invalid ones for this temporary collection
+
+                 const configEntry = {
+                     group: card.querySelector(\`#\${originalApiKey}-group\`).value.trim() || '未分组',
+                     description: card.querySelector(\`#\${originalApiKey}-description\`).value.trim(),
+                     url: card.querySelector(\`#\${originalApiKey}-url\`).value.trim(),
+                     method: card.querySelector(\`#\${originalApiKey}-method\`).value,
+                     queryParams: [],
+                     proxySettings: {}
+                 };
+                 // Simplified collection - just get the basics needed for re-render
+                 updatedApiUrls[apiKey] = configEntry;
+             });
+             const currentBaseTagInput = document.getElementById('baseTag');
+             return {
+                 apiUrls: updatedApiUrls,
+                 baseTag: currentBaseTagInput ? currentBaseTagInput.value.trim() : ''
+             };
+        }
+
+
         async function loadConfig() {
-            apiConfigsContainer.innerHTML = \`<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">正在加载配置...</span></div><p class="mt-2">正在加载配置...</p></div>\`;
+            apiConfigsContainer.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">正在加载配置...</span></div><p class="mt-2">正在加载配置...</p></div>'; // Changed to string concatenation
+            // The line that hid the batch section initially has been removed.
             try {
                 const response = await fetch('/config');
                 if (!response.ok) throw new Error(\`HTTP error! status: \${response.status}\`);
                 currentConfigData = await response.json();
                 if (!currentConfigData.apiUrls) currentConfigData.apiUrls = {};
                 renderConfig();
+                handleCheckboxChange(); // Initial update for batch buttons
             } catch (error) {
                 console.error('Error loading config:', error);
                 apiConfigsContainer.innerHTML = '<div class="alert alert-danger">加载配置失败。</div>';
