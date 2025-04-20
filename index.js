@@ -578,7 +578,9 @@ ${pathFunctions.map(path => `    - ${path}`).join('\n')}
     <!-- 新 Bootstrap5 核心 CSS 文件 -->
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
     <!-- Optional: Bootstrap Icons CDN (using cdnjs) -->
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <!-- Pinyin Library for Emoticon Fetching (using unpkg) -->
+    <script src="https://unpkg.com/pinyin-pro@3.26.0/dist/index.js"></script> 
     <style>
         /* v0 Style Adjustments */
         :root {
@@ -1122,6 +1124,8 @@ app.get('/admin', checkAdminAuth, (req, res) => {
     <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
     <!-- Optional: Bootstrap Icons CDN (using cdnjs) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <!-- Pinyin Library for Emoticon Fetching (using unpkg) -->
+    <script src="https://unpkg.com/pinyin-pro@3.26.0/dist/index.js"></script>
     <style>
         /* v0 Style Adjustments */
         :root {
@@ -1408,12 +1412,15 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 </head>
 <body>
     <main class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-             <h1 class="h3">API 转发配置管理</h1>
-             <button type="button" class="btn btn-success add-endpoint-button" onclick="addApiEndpoint()"><i class="bi bi-plus-lg"></i> 添加新 API 端点</button>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+             <h1 class="h3 mb-0">API 转发配置管理</h1>
+             <div class="d-flex gap-2 flex-wrap">
+                 <button type="button" class="btn btn-info fetch-emoticons-button" onclick="fetchAndAddEmoticons(this)" disabled><i class="bi bi-cloud-download"></i> 在线拉取表情包</button> 
+                 <button type="button" class="btn btn-success add-endpoint-button" onclick="addApiEndpoint()"><i class="bi bi-plus-lg"></i> 添加新 API 端点</button>
+             </div>
         </div>
 
-        <p class="text-muted mb-4">在这里修改、添加或删除 API 转发规则。所有更改将**立即生效**。</p>
+        <p class="text-muted mb-4">在这里修改、添加或删除 API 转发规则。点击“在线拉取表情包”可自动添加常用表情包 API。所有更改将在点击下方“保存所有配置”按钮后**立即生效**。</p>
 
         <form id="config-form">
             <div id="api-configs-container">
@@ -1472,7 +1479,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         }
 
         function sanitizeApiKey(key) {
-            return key.replace(/^\\//, '').replace(/[^a-zA-Z0-9-_]/g, '_');
+            // Remove any characters that are not letters, numbers, hyphens, or underscores
+            let sanitized = key.replace(/[^a-zA-Z0-9-_]/g, ''); 
+            // Allow keys to start with numbers
+            return sanitized;
         }
 
         function initializeTooltips(container) {
@@ -1914,7 +1924,137 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         }
 
         form.addEventListener('submit', saveConfig);
-        document.addEventListener('DOMContentLoaded', loadConfig);
+        
+        // --- New Function: Fetch and Add Emoticons ---
+        async function fetchAndAddEmoticons(button) {
+            const originalHtml = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = \`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 拉取中...\`;
+            
+            try {
+                showMessage('正在从 https://pic.696898.xyz/pic/list 拉取表情包列表...', 'info');
+                const response = await fetch('https://pic.696898.xyz/pic/list');
+                if (!response.ok) {
+                    throw new Error(\`HTTP error! status: \${response.status}\`);
+                }
+                const emoticonList = await response.json();
+                
+                if (!Array.isArray(emoticonList)) {
+                     throw new Error('返回的数据格式不是有效的 JSON 数组');
+                }
+                
+                showMessage(\`成功拉取 \${emoticonList.length} 个表情包列表，正在添加到配置中...\`, 'info');
+                
+                let addedCount = 0;
+                let pinyinFunction;
+
+                // Check for pinyin function availability
+                if (typeof pinyinPro !== 'undefined' && typeof pinyinPro.pinyin === 'function') {
+                    pinyinFunction = pinyinPro.pinyin;
+                    console.log("Using pinyin function from pinyinPro.pinyin");
+                } else {
+                    // Log detailed error information
+                    console.error('Pinyin function (pinyinPro.pinyin) not found after delay.');
+                    console.log('pinyinPro object:', pinyinPro); 
+                    if (pinyinPro) {
+                         console.log('typeof pinyinPro.pinyin:', typeof pinyinPro.pinyin);
+                    }
+                    throw new Error('pinyin-pro 库未能正确加载或初始化。请检查网络连接、浏览器控制台或稍后再试。');
+                }
+                
+                // Ensure the "表情包" group container exists
+                let emoticonGroupContainer = apiConfigsContainer.querySelector('#group-表情包');
+                if (!emoticonGroupContainer) {
+                    const groupTitle = document.createElement('h2');
+                    groupTitle.className = 'group-title';
+                    groupTitle.textContent = '表情包';
+                    // Find the correct place to insert (e.g., before '未分组' or at the end)
+                    const ungroupedContainer = apiConfigsContainer.querySelector('#group-未分组');
+                    if (ungroupedContainer) {
+                        apiConfigsContainer.insertBefore(groupTitle, ungroupedContainer);
+                        emoticonGroupContainer = document.createElement('div');
+                        emoticonGroupContainer.id = 'group-表情包';
+                        apiConfigsContainer.insertBefore(emoticonGroupContainer, ungroupedContainer);
+                    } else {
+                         apiConfigsContainer.appendChild(groupTitle);
+                         emoticonGroupContainer = document.createElement('div');
+                         emoticonGroupContainer.id = 'group-表情包';
+                         apiConfigsContainer.appendChild(emoticonGroupContainer);
+                    }
+                }
+
+                emoticonList.forEach(item => {
+                    if (item.name && item.path) { // Basic validation
+                        // Generate Pinyin initial key: get initials, keep non-Zh chars, lowercase, remove spaces, sanitize
+                        let pinyinInitialsRaw = pinyinFunction(item.name, { pattern: 'initial', toneType: 'none', nonZh: 'consecutive' });
+                        let pinyinKey = sanitizeApiKey(pinyinInitialsRaw.toLowerCase().replace(/\s+/g, '')); // Get initials, lowercase, remove spaces, sanitize
+
+                        if (!pinyinInitialsRaw) { // Check raw initials for warning
+                             console.warn(\`无法为 "\${item.name}" 生成拼音首字母 Key，跳过。\`);
+                             return; // Skip if pinyin generation failed
+                        }
+
+                        const newConfigEntry = {
+                            group: "表情包",
+                            description: \`\${item.name} 表情包\`,
+                            url: \`https://696898.xyz/pci?type=\${item.name}\`, // Use original name in URL
+                            method: "redirect",
+                            queryParams: [],
+                            proxySettings: {}
+                        };
+                        
+                        // Check if card with this key already exists in the UI, remove if it does
+                        const existingCard = apiConfigsContainer.querySelector(\`.card[data-api-key="\${pinyinKey}"]\`);
+                        if (existingCard) {
+                            console.log(\`端点 /\${pinyinKey} 已存在，将覆盖。\`);
+                            existingCard.remove();
+                        }
+
+                        const cardElement = renderApiEndpoint(pinyinKey, newConfigEntry);
+                        emoticonGroupContainer.appendChild(cardElement); // Add card to the "表情包" group
+                        addedCount++;
+                    } else {
+                         console.warn('跳过无效的表情包条目:', item);
+                    }
+                });
+                
+                // Re-initialize tooltips for new elements
+                setTimeout(() => initializeTooltips(emoticonGroupContainer), 100); 
+                
+                showMessage(\`成功添加/更新了 \${addedCount} 个表情包 API 端点。请检查配置并点击“保存所有配置”以生效。\`, 'success');
+                
+            } catch (error) {
+                console.error('拉取或处理表情包失败:', error);
+                showMessage(\`拉取表情包失败: \${error.message}\`, 'error');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig(); // Load existing config first
+
+            // Check for pinyin library and enable button if available
+            const fetchButton = document.querySelector('.fetch-emoticons-button');
+            if (fetchButton) {
+                // Give the CDN script a moment to load, then check
+                setTimeout(() => {
+                    // Check specifically for the expected function
+                    if (typeof pinyinPro !== 'undefined' && typeof pinyinPro.pinyin === 'function') {
+                        fetchButton.disabled = false;
+                        console.log('pinyin-pro library (pinyinPro.pinyin) loaded successfully. Enabling fetch button.');
+                    } else {
+                        console.error('pinyin-pro library failed to load or initialize correctly after delay. Fetch button remains disabled.');
+                        console.log('pinyinPro object:', pinyinPro);
+                         if (pinyinPro) {
+                             console.log('typeof pinyinPro.pinyin:', typeof pinyinPro.pinyin);
+                         }
+                        showMessage('无法加载拼音库，拉取表情包功能不可用。请检查网络、浏览器控制台或刷新页面重试。', 'error');
+                    }
+                }, 1000); // 1000ms delay
+            }
+        });
     </script>
 </body>
 </html>
