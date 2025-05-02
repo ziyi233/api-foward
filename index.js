@@ -1587,7 +1587,7 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                         <input type="url" class="form-control" id="ep-\${apiKey}-url" name="\${apiKey}-url" value="\${configEntry.url || ''}" placeholder="https://api.example.com/data" required>
                     </div>
                      <div class="col-sm-1">
-                         \${configEntry.urlConstruction && configEntry.urlConstruction.startsWith('special_') ? '<i class="bi bi-exclamation-triangle-fill text-warning tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="注意: 此端点原配置包含特殊 URL 构建逻辑 ('+configEntry.urlConstruction+'), 修改基础 URL 可能影响其功能。"></i>' : ''}
+                         \${configEntry.urlConstruction && configEntry.urlConstruction.startsWith('special_') ? '<i class="bi bi-exclamation-triangle-fill text-warning tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="注意: 此端点使用特殊 URL 构建逻辑, 修改基础 URL 可能影响其功能。"></i>' : ''}
                      </div>
                 </div>\`;
 
