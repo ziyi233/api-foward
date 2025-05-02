@@ -1563,9 +1563,9 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             // Group Input
             cardBody.innerHTML += \`
                 <div class="row mb-3 align-items-center">
-                    <label for="\${apiKey}-group" class="col-sm-3 col-form-label text-sm-end" title="用于分类显示的组名">分组:</label>
+                    <label for="ep-\${apiKey}-group" class="col-sm-3 col-form-label text-sm-end" title="用于分类显示的组名">分组:</label>
                     <div class="col-sm-9">
-                        <input type="text" class="form-control" id="\${apiKey}-group" name="\${apiKey}-group" value="\${configEntry.group || ''}" placeholder="例如: AI绘图, 表情包">
+                        <input type="text" class="form-control" id="ep-\${apiKey}-group" name="\${apiKey}-group" value="\${configEntry.group || ''}" placeholder="例如: AI绘图, 表情包">
                     </div>
                 </div>\`;
 
@@ -1573,18 +1573,18 @@ app.get('/admin', checkAdminAuth, (req, res) => {
              // Description
             cardBody.innerHTML += \`
                 <div class="row mb-3 align-items-center">
-                    <label for="\${apiKey}-description" class="col-sm-3 col-form-label text-sm-end" title="这个 API 端点的用途说明">描述:</label>
+                    <label for="ep-\${apiKey}-description" class="col-sm-3 col-form-label text-sm-end" title="这个 API 端点的用途说明">描述:</label>
                     <div class="col-sm-9">
-                        <textarea class="form-control" id="\${apiKey}-description" name="\${apiKey}-description" placeholder="例如：获取随机猫咪图片">\${configEntry.description || ''}</textarea>
+                        <textarea class="form-control" id="ep-\${apiKey}-description" name="\${apiKey}-description" placeholder="例如：获取随机猫咪图片">\${configEntry.description || ''}</textarea>
                     </div>
                 </div>\`;
 
             // URL
             cardBody.innerHTML += \`
                 <div class="row mb-3 align-items-center">
-                    <label for="\${apiKey}-url" class="col-sm-3 col-form-label text-sm-end" title="目标 API 的基础地址">目标 URL:</label>
+                    <label for="ep-\${apiKey}-url" class="col-sm-3 col-form-label text-sm-end" title="目标 API 的基础地址">目标 URL:</label>
                     <div class="col-sm-8">
-                        <input type="url" class="form-control" id="\${apiKey}-url" name="\${apiKey}-url" value="\${configEntry.url || ''}" placeholder="https://api.example.com/data" required>
+                        <input type="url" class="form-control" id="ep-\${apiKey}-url" name="\${apiKey}-url" value="\${configEntry.url || ''}" placeholder="https://api.example.com/data" required>
                     </div>
                      <div class="col-sm-1">
                          \${configEntry.urlConstruction && configEntry.urlConstruction.startsWith('special_') ? '<i class="bi bi-exclamation-triangle-fill text-warning tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="注意: 此端点原配置包含特殊 URL 构建逻辑 ('+configEntry.urlConstruction+'), 修改基础 URL 可能影响其功能。"></i>' : ''}
@@ -1594,9 +1594,9 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             // Method Dropdown
             cardBody.innerHTML += \`
                 <div class="row mb-3 align-items-center">
-                    <label for="\${apiKey}-method" class="col-sm-3 col-form-label text-sm-end" title="服务器处理此请求的方式">处理方式:</label>
+                    <label for="ep-\${apiKey}-method" class="col-sm-3 col-form-label text-sm-end" title="服务器处理此请求的方式">处理方式:</label>
                     <div class="col-sm-8">
-                        <select class="form-select" id="\${apiKey}-method" name="\${apiKey}-method">
+                        <select class="form-select" id="ep-\${apiKey}-method" name="\${apiKey}-method">
                             <option value="redirect" \${configEntry.method === 'redirect' ? 'selected' : ''}>浏览器重定向 (302)</option>
                             <option value="proxy" \${configEntry.method === 'proxy' ? 'selected' : ''}>服务器代理请求</option>
                         </select>
@@ -1615,16 +1615,16 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             // Image URL Field
             proxySettingsDiv.innerHTML += \`
                 <div class="row mb-3 align-items-center">
-                    <label for="\${apiKey}-imageUrlField" class="col-sm-3 col-form-label text-sm-end" title="如果目标 API 返回 JSON，指定包含图片链接的字段路径">图片链接字段:</label>
+                    <label for="ep-\${apiKey}-imageUrlField" class="col-sm-3 col-form-label text-sm-end" title="如果目标 API 返回 JSON，指定包含图片链接的字段路径">图片链接字段:</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" id="\${apiKey}-imageUrlField" name="\${apiKey}-imageUrlField" value="\${configEntry.proxySettings?.imageUrlField || ''}" placeholder="例如: data.url 或 image" \${apiKey === 'forward' ? 'readonly' : ''}>
+                        <input type="text" class="form-control" id="ep-\${apiKey}-imageUrlField" name="\${apiKey}-imageUrlField" value="\${configEntry.proxySettings?.imageUrlField || ''}" placeholder="例如: data.url 或 image" \${apiKey === 'forward' ? 'readonly' : ''}>
                     </div>
                      <div class="col-sm-1">
                          <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="\${apiKey === 'forward' ? "对于 /forward 路由，此设置由 'field' 查询参数动态决定（默认为 'url'）。" : '用于从 JSON 响应中提取图片链接。支持用点(.)访问嵌套字段，如 "result.data.imageUrl"。如果为空，则不尝试提取。'}"></i>
                      </div>
                 </div>\`;
              if (apiKey === 'forward') {
-                 const input = proxySettingsDiv.querySelector(\`#\${apiKey}-imageUrlField\`);
+                 const input = proxySettingsDiv.querySelector(\`#ep-\${apiKey}-imageUrlField\`);
                  if(input) input.value = "(由 'field' 参数决定)";
              }
 
@@ -1632,9 +1632,9 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             // Fallback Action Dropdown
             proxySettingsDiv.innerHTML += \`
                 <div class="row mb-3 align-items-center">
-                    <label for="\${apiKey}-fallbackAction" class="col-sm-3 col-form-label text-sm-end" title="当无法提取到图片链接时的处理方式">提取图片失败时:</label>
+                    <label for="ep-\${apiKey}-fallbackAction" class="col-sm-3 col-form-label text-sm-end" title="当无法提取到图片链接时的处理方式">提取图片失败时:</label>
                     <div class="col-sm-8">
-                        <select class="form-select" id="\${apiKey}-fallbackAction" name="\${apiKey}-fallbackAction">
+                        <select class="form-select" id="ep-\${apiKey}-fallbackAction" name="\${apiKey}-fallbackAction">
                             <option value="returnJson" \${(configEntry.proxySettings?.fallbackAction === 'returnJson' || !configEntry.proxySettings?.fallbackAction) ? 'selected' : ''}>返回原始 JSON</option>
                             <option value="error" \${configEntry.proxySettings?.fallbackAction === 'error' ? 'selected' : ''}>返回错误信息</option>
                         </select>
@@ -1650,7 +1650,7 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             queryParamsDiv.className = 'query-params mt-3 pt-3 border-top';
             queryParamsDiv.innerHTML = '<h5>查询参数配置</h5>';
             const paramsListDiv = document.createElement('div');
-            paramsListDiv.id = \`\${apiKey}-params-list\`;
+            paramsListDiv.id = \`ep-\${apiKey}-params-list\`;
 
             (configEntry.queryParams || []).forEach((param, index) => {
                 renderQueryParam(paramsListDiv, apiKey, param, index);
@@ -1670,7 +1670,7 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 
 
             // Event listener to toggle proxy settings visibility
-            const methodSelect = cardBody.querySelector(\`#\${apiKey}-method\`);
+            const methodSelect = cardBody.querySelector(\`#ep-\${apiKey}-method\`);
             methodSelect.addEventListener('change', (event) => {
                 proxySettingsDiv.style.display = event.target.value === 'proxy' ? 'block' : 'none';
             });
@@ -1778,40 +1778,41 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         function renderQueryParam(container, apiKey, param, index) {
              const paramDiv = document.createElement('div');
              paramDiv.className = 'param-item p-3 mb-3';
-             const uniquePrefix = \`\${apiKey}-param-\${index}\`;
+             const uniquePrefix = \`\${apiKey}-param-\${index}\`; // Keep original prefix logic for name attribute uniqueness
+             const uniqueIdPrefix = \`ep-\${apiKey}-param-\${index}\`; // New prefix for IDs
 
              paramDiv.innerHTML = \`
                 <button type="button" class="btn btn-danger btn-sm remove-param-button" title="移除此参数" onclick="removeQueryParam(this)"><i class="bi bi-x-lg"></i></button>
                 <div class="row mb-2 align-items-center">
-                    <label for="\${uniquePrefix}-name" class="col-sm-3 col-form-label text-sm-end" title="URL 中的参数名">参数名称:</label>
+                    <label for="\${uniqueIdPrefix}-name" class="col-sm-3 col-form-label text-sm-end" title="URL 中的参数名">参数名称:</label>
                     <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" id="\${uniquePrefix}-name" name="\${uniquePrefix}-name" value="\${param.name || ''}" required placeholder="例如: keyword">
+                        <input type="text" class="form-control form-control-sm" id="\${uniqueIdPrefix}-name" name="\${uniquePrefix}-name" value="\${param.name || ''}" required placeholder="例如: keyword">
                     </div>
                 </div>
                 <div class="row mb-2 align-items-center">
-                    <label for="\${uniquePrefix}-desc" class="col-sm-3 col-form-label text-sm-end" title="参数用途说明">参数描述:</label>
+                    <label for="\${uniqueIdPrefix}-desc" class="col-sm-3 col-form-label text-sm-end" title="参数用途说明">参数描述:</label>
                     <div class="col-sm-9">
-                        <textarea class="form-control form-control-sm" id="\${uniquePrefix}-desc" name="\${uniquePrefix}-desc" placeholder="例如: 搜索关键词">\${param.description || ''}</textarea>
+                        <textarea class="form-control form-control-sm" id="\${uniqueIdPrefix}-desc" name="\${uniquePrefix}-desc" placeholder="例如: 搜索关键词">\${param.description || ''}</textarea>
                     </div>
                 </div>
                  <div class="row mb-2 align-items-center">
-                    <label for="\${uniquePrefix}-required" class="col-sm-3 form-check-label text-sm-end" title="请求时必须提供此参数">是否必需:</label>
+                    <label for="\${uniqueIdPrefix}-required" class="col-sm-3 form-check-label text-sm-end" title="请求时必须提供此参数">是否必需:</label>
                      <div class="col-sm-9">
                         <div class="form-check form-switch">
-                             <input class="form-check-input" type="checkbox" role="switch" id="\${uniquePrefix}-required" name="\${uniquePrefix}-required" \${param.required ? 'checked' : ''}>
+                             <input class="form-check-input" type="checkbox" role="switch" id="\${uniqueIdPrefix}-required" name="\${uniquePrefix}-required" \${param.required ? 'checked' : ''}>
                         </div>
                     </div>
                 </div>
                  <div class="row mb-2 align-items-center">
-                    <label for="\${uniquePrefix}-default" class="col-sm-3 col-form-label text-sm-end" title="未提供参数时的默认值">默认值:</label>
+                    <label for="\${uniqueIdPrefix}-default" class="col-sm-3 col-form-label text-sm-end" title="未提供参数时的默认值">默认值:</label>
                     <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" id="\${uniquePrefix}-default" name="\${uniquePrefix}-default" value="\${param.defaultValue || ''}" placeholder="可选">
+                        <input type="text" class="form-control form-control-sm" id="\${uniqueIdPrefix}-default" name="\${uniquePrefix}-default" value="\${param.defaultValue || ''}" placeholder="可选">
                     </div>
                 </div>
                  <div class="row mb-2 align-items-center">
-                    <label for="\${uniquePrefix}-validValues" class="col-sm-3 col-form-label text-sm-end" title="限制参数的有效值（逗号分隔）">有效值:</label>
+                    <label for="\${uniqueIdPrefix}-validValues" class="col-sm-3 col-form-label text-sm-end" title="限制参数的有效值（逗号分隔）">有效值:</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" id="\${uniquePrefix}-validValues" name="\${uniquePrefix}-validValues" value="\${(param.validValues || []).join(',')}" placeholder="可选, 例如: value1,value2">
+                        <input type="text" class="form-control form-control-sm" id="\${uniqueIdPrefix}-validValues" name="\${uniquePrefix}-validValues" value="\${(param.validValues || []).join(',')}" placeholder="可选, 例如: value1,value2">
                     </div>
                      <div class="col-sm-1">
                          <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title='如果填写，参数值必须是列表中的一个（用逗号分隔）。留空则不限制。'></i>
@@ -2003,7 +2004,7 @@ app.get('/admin', checkAdminAuth, (req, res) => {
             selectedKeys.forEach(apiKey => {
                 const card = apiConfigsContainer.querySelector(\`.card[data-api-key="\${apiKey}"]\`);
                 if (card) {
-                    const groupInput = card.querySelector(\`input[id="\${apiKey}-group"]\`);
+                    const groupInput = card.querySelector(\`input[id="ep-\${apiKey}-group"]\`);
                     if (groupInput) {
                         groupInput.value = targetGroup;
                         movedCount++;
@@ -2106,10 +2107,10 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                  if (!apiKey) return; // Skip invalid ones for this temporary collection
 
                  const configEntry = {
-                     group: card.querySelector(\`#\${originalApiKey}-group\`).value.trim() || '未分组',
-                     description: card.querySelector(\`#\${originalApiKey}-description\`).value.trim(),
-                     url: card.querySelector(\`#\${originalApiKey}-url\`).value.trim(),
-                     method: card.querySelector(\`#\${originalApiKey}-method\`).value,
+                     group: card.querySelector(\`#ep-\${originalApiKey}-group\`).value.trim() || '未分组',
+                     description: card.querySelector(\`#ep-\${originalApiKey}-description\`).value.trim(),
+                     url: card.querySelector(\`#ep-\${originalApiKey}-url\`).value.trim(),
+                     method: card.querySelector(\`#ep-\${originalApiKey}-method\`).value,
                      queryParams: [],
                      proxySettings: {}
                  };
@@ -2159,12 +2160,12 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                  if (usedApiKeys.has(apiKey)) { showMessage(\`错误：API 端点路径 "/\${apiKey}" 重复！请确保每个端点路径唯一。\`, 'error'); apiKeyInput.focus(); hasError = true; return; }
                  usedApiKeys.add(apiKey);
 
-                const urlInput = card.querySelector(\`#\${originalApiKey}-url\`);
+                const urlInput = card.querySelector(\`#ep-\${originalApiKey}-url\`);
                 const configEntry = {
-                    group: card.querySelector(\`#\${originalApiKey}-group\`).value.trim() || '未分组',
-                    description: card.querySelector(\`#\${originalApiKey}-description\`).value.trim(),
+                    group: card.querySelector(\`#ep-\${originalApiKey}-group\`).value.trim() || '未分组',
+                    description: card.querySelector(\`#ep-\${originalApiKey}-description\`).value.trim(),
                     url: urlInput.value.trim(),
-                    method: card.querySelector(\`#\${originalApiKey}-method\`).value,
+                    method: card.querySelector(\`#ep-\${originalApiKey}-method\`).value,
                     queryParams: [],
                     proxySettings: {}
                 };
@@ -2172,19 +2173,19 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                 if (!configEntry.url) { showMessage(\`错误：端点 /\${apiKey} 的目标 URL 不能为空！\`, 'error'); urlInput.focus(); hasError = true; return; }
 
                 // Collect Query Params... (same as before)
-                const paramItems = card.querySelectorAll(\`#\${originalApiKey}-params-list .param-item\`);
+                const paramItems = card.querySelectorAll(\`#ep-\${originalApiKey}-params-list .param-item\`);
                 const paramNames = new Set();
                 paramItems.forEach((paramItem) => {
                      if (hasError) return;
-                     const nameInput = paramItem.querySelector(\`input[id$="-name"]\`);
+                     const nameInput = paramItem.querySelector(\`input[id^="ep-"][id$="-name"]\`); // More specific selector
                      const paramName = nameInput.value.trim();
                      if (!paramName) return;
                      if (paramNames.has(paramName)) { showMessage(\`错误：端点 /\${apiKey} 存在重复的查询参数名称 "\${paramName}"！\`, 'error'); nameInput.focus(); hasError = true; return; }
                      paramNames.add(paramName);
-                     const descInput = paramItem.querySelector(\`textarea[id$="-desc"]\`);
-                     const requiredInput = paramItem.querySelector(\`input[id$="-required"]\`);
-                     const defaultInput = paramItem.querySelector(\`input[id$="-default"]\`);
-                     const validValuesInput = paramItem.querySelector(\`input[id$="-validValues"]\`);
+                     const descInput = paramItem.querySelector(\`textarea[id^="ep-"][id$="-desc"]\`); // More specific selector
+                     const requiredInput = paramItem.querySelector(\`input[id^="ep-"][id$="-required"]\`); // More specific selector
+                     const defaultInput = paramItem.querySelector(\`input[id^="ep-"][id$="-default"]\`); // More specific selector
+                     const validValuesInput = paramItem.querySelector(\`input[id^="ep-"][id$="-validValues"]\`); // More specific selector
                      const validValuesString = validValuesInput.value.trim();
                      configEntry.queryParams.push({
                          name: paramName, description: descInput.value.trim(), required: requiredInput.checked,
@@ -2197,8 +2198,8 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 
                 // Collect Proxy Settings... (same as before)
                 if (configEntry.method === 'proxy') {
-                    const imageUrlFieldInput = card.querySelector(\`#\${originalApiKey}-imageUrlField\`);
-                    const fallbackActionSelect = card.querySelector(\`#\${originalApiKey}-fallbackAction\`);
+                    const imageUrlFieldInput = card.querySelector(\`#ep-\${originalApiKey}-imageUrlField\`);
+                    const fallbackActionSelect = card.querySelector(\`#ep-\${originalApiKey}-fallbackAction\`);
                     const originalConfigEntry = currentConfigData.apiUrls[originalApiKey];
                     if (apiKey === 'forward' && originalConfigEntry?.proxySettings?.imageUrlFieldFromParam) {
                          configEntry.proxySettings.imageUrlFieldFromParam = originalConfigEntry.proxySettings.imageUrlFieldFromParam;
