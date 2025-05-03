@@ -5,10 +5,12 @@ services:
     build: .
     container_name: api-forwarder
     ports:
-      - "6667:6667"
+      - "6667:3000"
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - PORT=6667
+      - PORT=3000
+      - ENABLE_FILE_OPERATIONS=true
+
     volumes:
       - ./logs:/app/logs
