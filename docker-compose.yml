@@ -11,6 +11,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - ENABLE_FILE_OPERATIONS=true
+      - ADMIN_TOKEN=admin
 
     volumes:
       - ./logs:/app/logs
