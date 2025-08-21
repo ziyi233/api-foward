@@ -2416,21 +2416,28 @@ app.get('/admin', checkAdminAuth, (req, res) => {
 });
 
 
-// --- Server Start ---
-// 确保在服务器启动前先加载配置
+// --- Server Initialization ---
 (async () => {
     try {
         console.log('Loading configuration before starting server...');
         await loadConfig();
         console.log('Configuration loaded successfully.');
         
-        // 启动服务器
-        app.listen(PORT, () => {
-            console.log(`API Forwarder running on http://localhost:${PORT}`);
-            console.log(`Admin interface available at http://localhost:${PORT}/admin`);
-        });
+        // The listen call should only happen when running directly (e.g., `node index.js`)
+        // and not when being imported by another file (like Cloudflare's _worker.js).
+        if (require.main === module) {
+            app.listen(PORT, () => {
+                console.log(`API Forwarder running on http://localhost:${PORT}`);
+                console.log(`Admin interface available at http://localhost:${PORT}/admin`);
+            });
+        }
     } catch (error) {
         console.error('Failed to start server:', error);
-        process.exit(1);
+        if (require.main === module) {
+            process.exit(1);
+        }
     }
 })();
+
+// Export the app for environments like Cloudflare Pages
+module.exports = app;
